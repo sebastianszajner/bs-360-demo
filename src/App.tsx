@@ -6,9 +6,10 @@ import { computeFitness, type FitnessResult } from './engine/fitness';
 import { fitnessToScoring, type ScoringResult, type PersonaData } from './engine/scorer';
 import SurveyForm from './components/survey/SurveyForm';
 import ReportView from './components/report/ReportView';
+import ReportIntro from './components/report/ReportIntro';
 import AdminPanel from './components/admin/AdminPanel';
 
-type Screen = 'home' | 'setup' | 'survey' | 'report' | 'admin';
+type Screen = 'home' | 'setup' | 'survey' | 'report' | 'intro' | 'admin';
 
 const PERSONA: PersonaData = {
   name: DEMO_PERSONA.name,
@@ -35,7 +36,7 @@ export default function App() {
     const f = computeFitness(model, answers, DEMO_COUNTS);
     setFitness(f);
     setResult(fitnessToScoring(f, PERSONA));
-    setScreen('report');
+    setScreen('intro');
   }
 
   function saveAndExitAdmin(m: ModelConfig) {
@@ -48,6 +49,19 @@ export default function App() {
     return <AdminPanel model={model} onSave={saveAndExitAdmin} onBack={() => setScreen('home')} />;
   }
 
+  if (screen === 'intro' && fitness) {
+    return (
+      <ReportIntro
+        persona={PERSONA}
+        fitness={fitness}
+        model={model}
+        surveyDate={DEMO_PERSONA.surveyDate}
+        onEnter={() => { window.scrollTo(0, 0); setScreen('report'); }}
+        onBack={() => { setResult(null); setFitness(null); setScreen('home'); }}
+      />
+    );
+  }
+
   if (screen === 'report' && result && fitness) {
     return (
       <ReportView
@@ -55,7 +69,7 @@ export default function App() {
         fitness={fitness}
         model={model}
         surveyDate={DEMO_PERSONA.surveyDate}
-        onReset={() => { setResult(null); setFitness(null); setScreen('home'); }}
+        onReset={() => { window.scrollTo(0, 0); setScreen('intro'); }}
       />
     );
   }

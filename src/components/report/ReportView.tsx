@@ -205,7 +205,7 @@ export default function ReportView({ result, fitness, model, surveyDate, onReset
       {/* HEADER */}
       <div className="no-print sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-5 py-3 flex items-center justify-between">
-          <button onClick={onReset} className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1">← Nowe badanie</button>
+          <button onClick={onReset} className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1">← Mapa raportu</button>
           <div className="text-xs text-gray-400 hidden sm:block">Raport rozwojowy 360° · SUUS Logistics</div>
           <button onClick={() => window.print()} className="text-sm font-semibold text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90" style={{ background: BRAND.primary }}>
             Pobierz PDF
