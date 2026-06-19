@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+:root {
+  --bs-primary: #7a00df;
+  --bs-secondary: #0693e3;
+  --bs-green: #00d084;
+  --bs-orange: #ff6900;
+  --bs-dark: #313131;
+  --suus-navy: #003f8a;
+  --suus-green: #7aa83e;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  background: #f8f8fb;
+  color: #313131;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+@media print {
+  .no-print { display: none !important; }
+  .print-break { page-break-before: always; }
+  body { background: white; font-size: 10pt; }
+  .report-section { page-break-inside: avoid; }
+}
