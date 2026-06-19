@@ -4,8 +4,21 @@
 // pozycję na suwaku 5-stopniowym i interpretację zależną od kierunku odchyłu.
 
 import type {
-  ModelConfig, CompetencyConfig, BehaviorConfig, RoleKey, FitnessState,
+  ModelConfig, CompetencyConfig, BehaviorConfig, RoleKey, FitnessState, ZoneConfig,
 } from '../data/modelConfig';
+import { DEFAULT_ZONES } from '../data/modelConfig';
+
+// Mapa stref: stan → konfiguracja strefy (etykieta, kolor, akcja). Z modelu lub domyślna.
+export type ZoneMap = Record<FitnessState, ZoneConfig>;
+
+export function buildZoneMap(zones?: ZoneConfig[]): ZoneMap {
+  const map = {} as ZoneMap;
+  for (const z of DEFAULT_ZONES) map[z.key] = z;       // domyślne jako fallback
+  if (zones) for (const z of zones) if (z?.key) map[z.key] = z;
+  return map;
+}
+
+export const DEFAULT_ZONE_MAP: ZoneMap = buildZoneMap();
 
 // Surowe odpowiedzi: behaviorId → rola → lista natężeń (1-6) od respondentów tej roli.
 export type RawAnswers = Record<string, Partial<Record<RoleKey, number[]>>>;
@@ -197,28 +210,10 @@ export function computeFitness(model: ModelConfig, answers: RawAnswers, counts: 
   };
 }
 
-// Etykiety stanów do UI.
-export const STATE_LABEL: Record<FitnessState, string> = {
-  far_low: 'Zdecydowanie za mało',
-  low: 'Za mało',
-  ok: 'W sam raz',
-  high: 'Za dużo',
-  far_high: 'Zdecydowanie za dużo',
-};
-
-export const STATE_SHORT: Record<FitnessState, string> = {
-  far_low: 'za mało', low: 'za mało', ok: 'OK', high: 'za dużo', far_high: 'za dużo',
-};
-
-// Kolory stanów: za mało → zieleń (wzmocnij), OK → mocna zieleń, za dużo → pomarańcz/czerwień (odpuść).
-export const STATE_COLOR: Record<FitnessState, string> = {
-  far_low: '#9ccc65',
-  low: '#c5e1a5',
-  ok: '#00d084',
-  high: '#ffab40',
-  far_high: '#ff5252',
-};
-
-export const STATE_ACTION: Record<FitnessState, string> = {
-  far_low: 'wzmocnij', low: 'wzmocnij', ok: 'utrzymaj', high: 'odpuść', far_high: 'odpuść',
-};
+// Domyślne etykiety/kolory/akcje wyprowadzone z DEFAULT_ZONE_MAP — fallback,
+// gdy komponent nie dostał edytowanych stref z modelu.
+const STATES: FitnessState[] = ['far_low', 'low', 'ok', 'high', 'far_high'];
+export const STATE_LABEL = Object.fromEntries(STATES.map((s) => [s, DEFAULT_ZONE_MAP[s].label])) as Record<FitnessState, string>;
+export const STATE_SHORT = Object.fromEntries(STATES.map((s) => [s, DEFAULT_ZONE_MAP[s].short])) as Record<FitnessState, string>;
+export const STATE_COLOR = Object.fromEntries(STATES.map((s) => [s, DEFAULT_ZONE_MAP[s].color])) as Record<FitnessState, string>;
+export const STATE_ACTION = Object.fromEntries(STATES.map((s) => [s, DEFAULT_ZONE_MAP[s].action])) as Record<FitnessState, string>;

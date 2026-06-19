@@ -1,42 +1,40 @@
 // Wizualizacje modelu trafności (punkty przegięcia).
 // Suwak 5-stopniowy, krzywa Gaussa z pasmem optimum, matryca trafności, badge stanu.
+// Etykiety i kolory stref pochodzą z modelu (edytowalne) — fallback DEFAULT_ZONE_MAP.
 import { BRAND } from '../../data/model';
-import { STATE_LABEL, STATE_COLOR, STATE_ACTION, type BehaviorFitness, type CompetencyFitness } from '../../engine/fitness';
+import { DEFAULT_ZONE_MAP, type BehaviorFitness, type CompetencyFitness, type ZoneMap } from '../../engine/fitness';
 import type { FitnessState } from '../../data/modelConfig';
 
-// Badge stanu trafności (za mało / OK / za dużo).
-export function StateBadge({ state, small = false }: { state: FitnessState; small?: boolean }) {
-  const color = STATE_COLOR[state];
+// Badge stanu trafności (nazwa strefy z modelu).
+export function StateBadge({ state, small = false, zones = DEFAULT_ZONE_MAP }: { state: FitnessState; small?: boolean; zones?: ZoneMap }) {
+  const z = zones[state];
   return (
     <span
       className={`inline-flex items-center gap-1 font-semibold rounded-full whitespace-nowrap ${small ? 'text-[10px] px-2 py-0.5' : 'text-xs px-2.5 py-0.5'}`}
-      style={{ background: color + '22', color: state === 'far_high' ? '#d32f2f' : state === 'ok' ? '#0a8f5b' : color }}
+      style={{ background: z.color + '22', color: state === 'far_high' ? '#d32f2f' : state === 'ok' ? '#0a8f5b' : z.color }}
     >
-      {STATE_LABEL[state]}
+      {z.label}
     </span>
   );
 }
 
 // Suwak 5-stopniowy: za mało ↔ OK ↔ za dużo, z markerem pozycji wyniku.
-export function FitnessSlider({ beh }: { beh: BehaviorFitness }) {
+export function FitnessSlider({ beh, zones = DEFAULT_ZONE_MAP }: { beh: BehaviorFitness; zones?: ZoneMap }) {
   const monotonic = beh.type === 'monotonic';
-  // segmenty: [za mało x2][OK][za dużo x2]; dla monotonic prawa strona też OK
   const segs = monotonic
     ? ['#e8f3e0', '#cfe8b8', '#00d084', '#7ed9a8', '#bdeccd']
     : ['#eef6e8', '#cfe8b8', '#00d084', '#ffcc80', '#ff7961'];
-  const markerColor = STATE_COLOR[beh.state];
+  const markerColor = zones[beh.state].color;
 
   return (
     <div className="w-full">
       <div className="relative h-3 rounded-full overflow-hidden flex">
         {segs.map((c, i) => <div key={i} className="h-full flex-1" style={{ background: c }} />)}
-        {/* marker pozycji wyniku otoczenia */}
         <div
           className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full border-2 border-white shadow-md z-10"
           style={{ left: `${beh.sliderPos}%`, background: markerColor }}
           title={`Otoczenie: ${beh.avgIntensity.toFixed(2)} · target ${beh.target}`}
         />
-        {/* znacznik samooceny (mniejszy, romb) */}
         {beh.selfIntensity > 0 && (
           <div
             className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-2.5 rotate-45 border border-white z-10"
@@ -46,7 +44,7 @@ export function FitnessSlider({ beh }: { beh: BehaviorFitness }) {
         )}
       </div>
       <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-        <span>{monotonic ? 'za mało' : 'za mało'}</span>
+        <span>za mało</span>
         <span className="font-semibold" style={{ color: BRAND.green }}>OK</span>
         <span>{monotonic ? 'pełne' : 'za dużo'}</span>
       </div>
@@ -55,43 +53,38 @@ export function FitnessSlider({ beh }: { beh: BehaviorFitness }) {
 }
 
 function selfPos(beh: BehaviorFitness): number {
-  // pozycja samooceny na tej samej skali co marker otoczenia
   const span = beh.target - 1;
   const above = 6 - beh.target;
   if (beh.selfIntensity <= beh.target) return Math.round((span > 0 ? (beh.selfIntensity - 1) / span : 1) * 50);
   return Math.round(50 + (above > 0 ? (beh.selfIntensity - beh.target) / above : 0) * 50);
 }
 
-// Wiersz zachowania: tekst + suwak + badge + akcja.
-export function BehaviorFitnessRow({ beh }: { beh: BehaviorFitness }) {
+// Wiersz zachowania: tekst + suwak + badge + interpretacja.
+export function BehaviorFitnessRow({ beh, zones = DEFAULT_ZONE_MAP }: { beh: BehaviorFitness; zones?: ZoneMap }) {
   return (
     <div className="py-3 border-b border-gray-100 last:border-0">
       <div className="flex items-start justify-between gap-3 mb-2">
         <span className="text-sm text-gray-700 flex-1">{beh.text}</span>
-        <StateBadge state={beh.state} small />
+        <StateBadge state={beh.state} small zones={zones} />
       </div>
-      <FitnessSlider beh={beh} />
+      <FitnessSlider beh={beh} zones={zones} />
       <div className="text-[12px] text-gray-500 mt-1.5 leading-snug">{beh.interpretation}</div>
     </div>
   );
 }
 
 // Krzywa Gaussa efektywności: pasmo OK w środku, marker wyniku.
-export function GaussCurve({ comp, height = 150 }: { comp: CompetencyFitness; height?: number }) {
+export function GaussCurve({ comp, height = 150, zones = DEFAULT_ZONE_MAP }: { comp: CompetencyFitness; height?: number; zones?: ZoneMap }) {
   const w = 320, h = height, pad = 18;
-  // krzywa dzwonowa
   const pts: string[] = [];
   for (let i = 0; i <= 60; i++) {
-    const x = i / 60;                       // 0..1
+    const x = i / 60;
     const px = pad + x * (w - 2 * pad);
-    const bell = Math.exp(-Math.pow((x - 0.5) * 4.2, 2)); // szczyt w środku
+    const bell = Math.exp(-Math.pow((x - 0.5) * 4.2, 2));
     const py = (h - pad) - bell * (h - 2 * pad);
     pts.push(`${px.toFixed(1)},${py.toFixed(1)}`);
   }
-  // marker: średnia trafność kompetencji → odległość od środka.
-  // wysoka trafność = blisko środka (szczyt); niska = na zboczu.
   const fit = comp.fitnessPct / 100;
-  // kierunek odchyłu: jeśli więcej zachowań "za dużo" → prawo, inaczej lewo
   const tooHigh = comp.behaviors.filter((b) => b.state === 'high' || b.state === 'far_high').length;
   const tooLow = comp.behaviors.filter((b) => b.state === 'low' || b.state === 'far_low').length;
   const dir = tooHigh > tooLow ? 1 : -1;
@@ -100,19 +93,15 @@ export function GaussCurve({ comp, height = 150 }: { comp: CompetencyFitness; he
   const markerX = pad + mx * (w - 2 * pad);
   const bellM = Math.exp(-Math.pow((mx - 0.5) * 4.2, 2));
   const markerY = (h - pad) - bellM * (h - 2 * pad);
+  const stateColor = zones[comp.state].color;
 
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full" style={{ maxHeight: height }}>
-      {/* pasmo OK */}
       <rect x={pad + 0.4 * (w - 2 * pad)} y={pad} width={0.2 * (w - 2 * pad)} height={h - 2 * pad} fill={BRAND.green} opacity={0.1} />
-      {/* oś */}
       <line x1={pad} y1={h - pad} x2={w - pad} y2={h - pad} stroke="#e5e7eb" />
-      {/* krzywa */}
       <polyline points={pts.join(' ')} fill="none" stroke="#cbd5e1" strokeWidth={2} />
-      {/* marker */}
-      <line x1={markerX} y1={markerY} x2={markerX} y2={h - pad} stroke={STATE_COLOR[comp.state]} strokeWidth={2} strokeDasharray="3 2" />
-      <circle cx={markerX} cy={markerY} r={6} fill={STATE_COLOR[comp.state]} stroke="#fff" strokeWidth={2} />
-      {/* etykiety */}
+      <line x1={markerX} y1={markerY} x2={markerX} y2={h - pad} stroke={stateColor} strokeWidth={2} strokeDasharray="3 2" />
+      <circle cx={markerX} cy={markerY} r={6} fill={stateColor} stroke="#fff" strokeWidth={2} />
       <text x={pad} y={h - 4} fontSize={9} fill="#9ca3af">za mało</text>
       <text x={w / 2} y={h - 4} fontSize={9} fill={BRAND.green} textAnchor="middle" fontWeight="600">optimum</text>
       <text x={w - pad} y={h - 4} fontSize={9} fill="#9ca3af" textAnchor="end">za dużo</text>
@@ -121,7 +110,7 @@ export function GaussCurve({ comp, height = 150 }: { comp: CompetencyFitness; he
 }
 
 // Matryca trafności: kompetencje × zachowania, kolor = stan.
-export function FitnessMatrix({ competencies }: { competencies: CompetencyFitness[] }) {
+export function FitnessMatrix({ competencies, zones = DEFAULT_ZONE_MAP }: { competencies: CompetencyFitness[]; zones?: ZoneMap }) {
   const maxBeh = Math.max(...competencies.map((c) => c.behaviors.length));
   return (
     <div className="overflow-x-auto">
@@ -135,12 +124,13 @@ export function FitnessMatrix({ competencies }: { competencies: CompetencyFitnes
               {Array.from({ length: maxBeh }).map((_, i) => {
                 const b = c.behaviors[i];
                 if (!b) return <td key={i} />;
+                const z = zones[b.state];
                 return (
                   <td key={i} className="p-0">
                     <div
                       className="rounded-md flex items-center justify-center text-[10px] font-bold text-white"
-                      style={{ background: STATE_COLOR[b.state], height: 34, minWidth: 52 }}
-                      title={`${b.text} — ${STATE_LABEL[b.state]} (${STATE_ACTION[b.state]})`}
+                      style={{ background: z.color, height: 34, minWidth: 52 }}
+                      title={`${b.text} — ${z.label} (${z.action})`}
                     >
                       {b.avgIntensity.toFixed(1)}
                     </div>
@@ -154,8 +144,8 @@ export function FitnessMatrix({ competencies }: { competencies: CompetencyFitnes
       <div className="flex flex-wrap gap-3 mt-3 text-[11px] text-gray-500">
         {(['far_low', 'ok', 'far_high'] as FitnessState[]).map((s) => (
           <span key={s} className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded inline-block" style={{ background: STATE_COLOR[s] }} />
-            {s === 'far_low' ? 'za mało (wzmocnij)' : s === 'ok' ? 'w sam raz' : 'za dużo (odpuść)'}
+            <span className="w-3 h-3 rounded inline-block" style={{ background: zones[s].color }} />
+            {zones[s].label} ({zones[s].action})
           </span>
         ))}
       </div>

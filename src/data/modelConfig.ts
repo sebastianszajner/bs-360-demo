@@ -27,6 +27,23 @@ export type BehaviorType = 'optimal' | 'monotonic';
 // Stan trafności po porównaniu wyniku z targetem.
 export type FitnessState = 'far_low' | 'low' | 'ok' | 'high' | 'far_high';
 
+// Strefa trafności — pięć obszarów z edytowalnymi nazwami. Kalibrowane w panelu admina.
+export interface ZoneConfig {
+  key: FitnessState;
+  label: string;   // pełna nazwa, np. "Zdecydowanie poniżej normy"
+  short: string;   // krótka etykieta do badge, np. "wyraźny niedobór"
+  action: string;  // kierunek pracy: wzmocnij / utrzymaj / odpuść
+  color: string;   // kolor strefy
+}
+
+export const DEFAULT_ZONES: ZoneConfig[] = [
+  { key: 'far_low', label: 'Zdecydowanie poniżej normy', short: 'wyraźny niedobór', action: 'wzmocnij', color: '#9ccc65' },
+  { key: 'low', label: 'Za mało, ale w skali', short: 'lekki niedobór', action: 'wzmocnij', color: '#c5e1a5' },
+  { key: 'ok', label: 'W sam raz', short: 'optimum', action: 'utrzymaj', color: '#00d084' },
+  { key: 'high', label: 'Za dużo, ale w skali', short: 'lekki nadmiar', action: 'odpuść', color: '#ffab40' },
+  { key: 'far_high', label: 'Zdecydowanie powyżej normy', short: 'wyraźny nadmiar', action: 'odpuść', color: '#ff5252' },
+];
+
 export interface BehaviorConfig {
   id: string;
   text: string;
@@ -53,6 +70,7 @@ export interface ScaleConfig {
   min: number;           // dolna granica skali natężenia
   max: number;           // górna granica
   labels: string[];      // opisy stopni skali (min..max)
+  zones: ZoneConfig[];   // pięć stref trafności (edytowalne nazwy)
 }
 
 export interface ModelConfig {
@@ -80,6 +98,7 @@ export const DEFAULT_SCALE: ScaleConfig = {
     'Często',
     'Bardzo często / w każdej sytuacji',
   ],
+  zones: DEFAULT_ZONES,
 };
 
 export const DEFAULT_MODEL: ModelConfig = {

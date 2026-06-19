@@ -1,8 +1,16 @@
 // Przechowywanie modelu konfiguracyjnego w localStorage.
 // Panel admina zapisuje tu zmiany; raport i ankieta czytają aktualny model.
-import { DEFAULT_MODEL, type ModelConfig } from './modelConfig';
+import { DEFAULT_MODEL, DEFAULT_ZONES, type ModelConfig } from './modelConfig';
 
 const STORAGE_KEY = 'bs360_model_v1';
+
+// Migracja modeli z localStorage zapisanych przed dodaniem stref.
+function migrate(m: ModelConfig): ModelConfig {
+  if (!m.scale.zones || m.scale.zones.length < 5) {
+    m.scale.zones = structuredClone(DEFAULT_ZONES);
+  }
+  return m;
+}
 
 export function loadModel(): ModelConfig {
   try {
@@ -11,14 +19,19 @@ export function loadModel(): ModelConfig {
     const parsed = JSON.parse(raw) as ModelConfig;
     // prosta walidacja kształtu
     if (!parsed.competencies || !parsed.scale || !parsed.roles) return structuredClone(DEFAULT_MODEL);
-    return parsed;
+    return migrate(parsed);
   } catch {
     return structuredClone(DEFAULT_MODEL);
   }
 }
 
-export function saveModel(model: ModelConfig): void {
+export function lastSavedAt(): string | null {
+  return localStorage.getItem(STORAGE_KEY + '_savedAt');
+}
+
+export function saveModel(model: ModelConfig, savedAtIso?: string): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(model));
+  if (savedAtIso) localStorage.setItem(STORAGE_KEY + '_savedAt', savedAtIso);
 }
 
 export function resetModel(): ModelConfig {

@@ -8,7 +8,8 @@ import {
   REFLEKSJA_LUKI, PYTANIA_OTWARTE, PLAN_DZIALAN, SLOWNIK, LEGENDA_KOLORY,
   SCENARIUSZE, MANIFEST, SKALA,
 } from '../../data/reportContent';
-import type { FitnessResult, CompetencyFitness } from '../../engine/fitness';
+import type { FitnessResult, CompetencyFitness, ZoneMap } from '../../engine/fitness';
+import { buildZoneMap } from '../../engine/fitness';
 import type { ModelConfig } from '../../data/modelConfig';
 import RadarChartComponent from './RadarChart';
 import GapChart from './GapChart';
@@ -86,7 +87,7 @@ function CompNum({ n, color }: { n: number; color: string }) {
 
 /* ---------- sekcja kompetencji ---------- */
 
-function CompetencySection({ comp, fit, idx }: { comp: CompetencyScore; fit: CompetencyFitness; idx: number }) {
+function CompetencySection({ comp, fit, idx, zones }: { comp: CompetencyScore; fit: CompetencyFitness; idx: number; zones: ZoneMap }) {
   const narr = COMPETENCY_NARRATIVES[comp.id];
   const def = COMPETENCIES.find((k) => k.id === comp.id)!;
   const voice = COMP_VOICES[comp.id];
@@ -123,7 +124,7 @@ function CompetencySection({ comp, fit, idx }: { comp: CompetencyScore; fit: Com
       </p>
       <div className="grid md:grid-cols-[1fr_auto] gap-6 items-start">
         <div>
-          {fit.behaviors.map((b) => <BehaviorFitnessRow key={b.id} beh={b} />)}
+          {fit.behaviors.map((b) => <BehaviorFitnessRow key={b.id} beh={b} zones={zones} />)}
         </div>
         <div className="flex flex-col items-center gap-2 md:pt-2">
           <FitnessRing pct={fit.fitnessPct} color={comp.color} label="dopasowanie" />
@@ -199,6 +200,7 @@ export default function ReportView({ result, fitness, model, surveyDate, onReset
   const bottom3 = [...competencies].sort((a, b) => b.gap - a.gap).slice(0, 3);
   const counts = fitness.respondentCounts;
   const roleBreakdown = model.roles.map((r) => ({ label: r.label, count: counts[r.key] ?? 0 }));
+  const zones = buildZoneMap(model.scale.zones);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -455,18 +457,18 @@ export default function ReportView({ result, fitness, model, surveyDate, onReset
 
           <H2>Mapa trafności wszystkich zachowań</H2>
           <p className="text-sm text-gray-500 mb-3">Każda komórka to jedno zachowanie. Kolor mówi, czy jest w optimum, czy przegięte w którąś stronę.</p>
-          <FitnessMatrix competencies={fitness.competencies} />
+          <FitnessMatrix competencies={fitness.competencies} zones={zones} />
 
           <H2>Profil trafności per kompetencja</H2>
           <div className="grid md:grid-cols-2 gap-x-8 gap-y-5 mt-2">
             {fitness.competencies.map((cf) => (
               <div key={cf.id} className="flex items-center gap-3">
-                <div className="w-36 shrink-0"><GaussCurve comp={cf} height={110} /></div>
+                <div className="w-36 shrink-0"><GaussCurve comp={cf} height={110} zones={zones} /></div>
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-bold mb-1" style={{ color: BRAND.suusNavy }}>{cf.nameShort}</div>
                   <div className="flex items-baseline gap-2 mb-1">
                     <span className="text-2xl font-black" style={{ color: cf.color }}>{cf.fitnessPct}%</span>
-                    <StateBadge state={cf.state} small />
+                    <StateBadge state={cf.state} small zones={zones} />
                   </div>
                   <div className="text-xs text-gray-400">dopasowanie · {cf.offTargetCount} z {cf.behaviors.length} poza pasmem</div>
                 </div>
@@ -528,7 +530,7 @@ export default function ReportView({ result, fitness, model, surveyDate, onReset
         </Section>
 
         {/* 9-13 · PIĘĆ KOMPETENCJI */}
-        {competencies.map((c, i) => <CompetencySection key={c.id} comp={c} fit={fitById[c.id]} idx={i} />)}
+        {competencies.map((c, i) => <CompetencySection key={c.id} comp={c} fit={fitById[c.id]} idx={i} zones={zones} />)}
 
         {/* 14 · PYTANIA OTWARTE */}
         <Section>

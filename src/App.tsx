@@ -39,14 +39,15 @@ export default function App() {
     setScreen('intro');
   }
 
-  function saveAndExitAdmin(m: ModelConfig) {
-    saveModel(m);
+  function persistModel(m: ModelConfig): string {
+    const iso = new Date().toISOString();
+    saveModel(m, iso);
     setModel(m);
-    setScreen('home');
+    return iso;
   }
 
   if (screen === 'admin') {
-    return <AdminPanel model={model} onSave={saveAndExitAdmin} onBack={() => setScreen('home')} />;
+    return <AdminPanel model={model} onSave={persistModel} onBack={() => setScreen('home')} />;
   }
 
   if (screen === 'intro' && fitness) {
