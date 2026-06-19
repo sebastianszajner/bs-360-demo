@@ -9,7 +9,7 @@ import {
   Tooltip,
 } from 'recharts';
 import type { CompetencyScore } from '../../engine/scorer';
-import { ROLE_COLORS, ROLES, type RoleKey } from '../../data/model';
+import { COMPETENCIES, ROLE_COLORS, ROLES, type RoleKey } from '../../data/model';
 
 interface Props {
   competencies: CompetencyScore[];
@@ -18,8 +18,9 @@ interface Props {
 const ROLES_TO_SHOW: RoleKey[] = ['sam', 'prz', 'wsp', 'pod'];
 
 export default function RadarChartComponent({ competencies }: Props) {
+  const shortNames = Object.fromEntries(COMPETENCIES.map((c) => [c.id, c.nameShort]));
   const data = competencies.map((c) => ({
-    subject: c.name.replace(' i ', '\ni ').replace(' operacyjnym', '').replace(' i adaptacja', ''),
+    subject: shortNames[c.id] ?? c.name,
     ...Object.fromEntries(ROLES_TO_SHOW.map((r) => [r, +c.avgByRole[r].toFixed(2)])),
   }));
 
