@@ -1,22 +1,30 @@
 import type { ScoringResult, CompetencyScore } from '../../engine/scorer';
 import {
   ROLE_SHORT, BRAND, COMPETENCIES, DISTRIBUTIONS, COMP_VOICES,
-  competencyZone, RESPONDENT_BREAKDOWN, type RoleKey,
+  competencyZone, type RoleKey,
 } from '../../data/model';
 import {
   COMPETENCY_NARRATIVES, GLOBAL_ANALYSIS, KLUCZOWY_WNIOSEK, ANALITYKA_LUKI,
   REFLEKSJA_LUKI, PYTANIA_OTWARTE, PLAN_DZIALAN, SLOWNIK, LEGENDA_KOLORY,
   SCENARIUSZE, MANIFEST, SKALA,
 } from '../../data/reportContent';
+import type { FitnessResult, CompetencyFitness } from '../../engine/fitness';
+import type { ModelConfig } from '../../data/modelConfig';
 import RadarChartComponent from './RadarChart';
 import GapChart from './GapChart';
 import {
   DonutScore, BehaviorBars, Histogram, Heatmap, GapLines, TopBottomBehaviors,
   JohariWindow, RoleScoreRow,
 } from './ReportVisuals';
+import {
+  StateBadge, BehaviorFitnessRow, GaussCurve, FitnessMatrix, FitnessRing,
+} from './FitnessVisuals';
 
 interface Props {
   result: ScoringResult;
+  fitness: FitnessResult;
+  model: ModelConfig;
+  surveyDate: string;
   onReset: () => void;
 }
 
@@ -78,7 +86,7 @@ function CompNum({ n, color }: { n: number; color: string }) {
 
 /* ---------- sekcja kompetencji ---------- */
 
-function CompetencySection({ comp, idx }: { comp: CompetencyScore; idx: number }) {
+function CompetencySection({ comp, fit, idx }: { comp: CompetencyScore; fit: CompetencyFitness; idx: number }) {
   const narr = COMPETENCY_NARRATIVES[comp.id];
   const def = COMPETENCIES.find((k) => k.id === comp.id)!;
   const voice = COMP_VOICES[comp.id];
@@ -108,11 +116,28 @@ function CompetencySection({ comp, idx }: { comp: CompetencyScore; idx: number }
         </div>
       </div>
 
-      <H2>Szczegółowe zachowania w tej kompetencji</H2>
-      <p className="text-sm text-gray-500 mb-3">Średnia ocena otoczenia dla każdego ze składowych zachowań:</p>
+      <H2>Trafność zachowań — punkty przegięcia</H2>
+      <p className="text-sm text-gray-500 mb-3">
+        Każde zachowanie ma poziom optymalny. Suwak pokazuje, czy otoczenie widzi je jako za mało, w sam raz, czy za dużo.
+        Romb to samoocena, kropka to średnia otoczenia.
+      </p>
+      <div className="grid md:grid-cols-[1fr_auto] gap-6 items-start">
+        <div>
+          {fit.behaviors.map((b) => <BehaviorFitnessRow key={b.id} beh={b} />)}
+        </div>
+        <div className="flex flex-col items-center gap-2 md:pt-2">
+          <FitnessRing pct={fit.fitnessPct} color={comp.color} label="dopasowanie" />
+          <div className="text-center">
+            <div className="text-xs text-gray-400">poza optimum</div>
+            <div className="text-sm font-bold" style={{ color: BRAND.suusNavy }}>{fit.offTargetCount} z {fit.behaviors.length} zachowań</div>
+          </div>
+        </div>
+      </div>
+
+      <H2>Szczegółowe natężenie — średnia z otoczenia</H2>
       <BehaviorBars comp={comp} />
 
-      <H2>Rozkład odpowiedzi 11 respondentów</H2>
+      <H2>Rozkład odpowiedzi respondentów</H2>
       <p className="text-sm text-gray-500 mb-1">Im bardziej rozkład jest skupiony po prawej, tym wyższa zgodność oceny.</p>
       <Histogram dist={DISTRIBUTIONS[comp.id]} color={comp.color} />
 
@@ -166,11 +191,14 @@ function CompetencySection({ comp, idx }: { comp: CompetencyScore; idx: number }
 
 /* ---------- główny widok ---------- */
 
-export default function ReportView({ result, onReset }: Props) {
+export default function ReportView({ result, fitness, model, surveyDate, onReset }: Props) {
   const { competencies, persona } = result;
+  const fitById = Object.fromEntries(fitness.competencies.map((f) => [f.id, f]));
   const byOthers = [...competencies].sort((a, b) => b.avgOthers - a.avgOthers);
   const top3 = byOthers.slice(0, 3);
   const bottom3 = [...competencies].sort((a, b) => b.gap - a.gap).slice(0, 3);
+  const counts = fitness.respondentCounts;
+  const roleBreakdown = model.roles.map((r) => ({ label: r.label, count: counts[r.key] ?? 0 }));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -201,9 +229,16 @@ export default function ReportView({ result, onReset }: Props) {
             <div className="text-white/90 text-lg mt-1">{persona.position}</div>
             <div className="text-white/70">{persona.location}</div>
             <div className="flex flex-wrap gap-x-6 gap-y-1 mt-5 text-sm text-white/80">
-              <span>Badanie: {persona.tenure ? 'marzec 2026' : 'marzec 2026'}</span>
-              <span>Respondenci: 11 osób</span>
-              <span>Kompetencje: 5</span>
+              <span>Badanie: {surveyDate}</span>
+              <span>Respondenci: {fitness.totalRespondents} osób</span>
+              <span>Kompetencje: {model.competencies.length}</span>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-4">
+              {roleBreakdown.map((r) => (
+                <span key={r.label} className="text-xs px-3 py-1 rounded-full bg-white/10 text-white/85">
+                  {r.label}: <b>{r.count}</b>
+                </span>
+              ))}
             </div>
           </div>
           <div className="p-7 md:p-9">
@@ -303,13 +338,13 @@ export default function ReportView({ result, onReset }: Props) {
             <div>
               <H2>Kto wziął udział w badaniu</H2>
               <div className="space-y-1">
-                {RESPONDENT_BREAKDOWN.map((r) => (
-                  <div key={r.role} className="flex justify-between text-sm border-b border-gray-100 py-1.5">
+                {roleBreakdown.map((r) => (
+                  <div key={r.label} className="flex justify-between text-sm border-b border-gray-100 py-1.5">
                     <span className="text-gray-600">{r.label}</span><span className="font-bold" style={{ color: BRAND.suusNavy }}>{r.count}</span>
                   </div>
                 ))}
                 <div className="flex justify-between text-sm py-1.5 font-bold">
-                  <span>RAZEM</span><span style={{ color: BRAND.suusNavy }}>11</span>
+                  <span>RAZEM</span><span style={{ color: BRAND.suusNavy }}>{fitness.totalRespondents}</span>
                 </div>
               </div>
             </div>
@@ -394,6 +429,62 @@ export default function ReportView({ result, onReset }: Props) {
           <TopBottomBehaviors competencies={competencies} />
         </Section>
 
+        {/* 7b · PUNKTY PRZEGIĘCIA — MATRYCA TRAFNOŚCI */}
+        <Section>
+          <Eyebrow color={BRAND.green}>To, co wyróżnia ten raport</Eyebrow>
+          <H1>Punkty przegięcia — matryca trafności</H1>
+          <Para>
+            To nie jest skala, w której więcej zawsze znaczy lepiej. Każde zachowanie ma poziom optymalny.
+            Można go robić za mało (trzeba wzmocnić), w sam raz (utrzymać), albo za dużo (warto odpuścić).
+            Dopiero trafienie w ten poziom to adekwatność.
+          </Para>
+          <div className="grid md:grid-cols-3 gap-3 my-4">
+            <div className="rounded-xl p-4" style={{ background: '#cfe8b8' }}>
+              <div className="text-sm font-bold" style={{ color: '#3d6b1f' }}>Za mało</div>
+              <div className="text-[13px] text-gray-700 mt-1">Zachowanie poniżej poziomu, którego potrzebuje rola. Kierunek: wzmocnić.</div>
+            </div>
+            <div className="rounded-xl p-4" style={{ background: BRAND.green + '22' }}>
+              <div className="text-sm font-bold" style={{ color: '#0a8f5b' }}>W sam raz</div>
+              <div className="text-[13px] text-gray-700 mt-1">Zachowanie w paśmie optymalnym. Kierunek: utrzymać i świadomie wykorzystywać.</div>
+            </div>
+            <div className="rounded-xl p-4" style={{ background: '#ffcc80' }}>
+              <div className="text-sm font-bold" style={{ color: '#b5560a' }}>Za dużo</div>
+              <div className="text-[13px] text-gray-700 mt-1">Zachowanie przegięte — w nadmiarze szkodzi. Kierunek: odpuścić, wyważyć.</div>
+            </div>
+          </div>
+
+          <H2>Mapa trafności wszystkich zachowań</H2>
+          <p className="text-sm text-gray-500 mb-3">Każda komórka to jedno zachowanie. Kolor mówi, czy jest w optimum, czy przegięte w którąś stronę.</p>
+          <FitnessMatrix competencies={fitness.competencies} />
+
+          <H2>Profil trafności per kompetencja</H2>
+          <div className="grid md:grid-cols-2 gap-x-8 gap-y-5 mt-2">
+            {fitness.competencies.map((cf) => (
+              <div key={cf.id} className="flex items-center gap-3">
+                <div className="w-36 shrink-0"><GaussCurve comp={cf} height={110} /></div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-bold mb-1" style={{ color: BRAND.suusNavy }}>{cf.nameShort}</div>
+                  <div className="flex items-baseline gap-2 mb-1">
+                    <span className="text-2xl font-black" style={{ color: cf.color }}>{cf.fitnessPct}%</span>
+                    <StateBadge state={cf.state} small />
+                  </div>
+                  <div className="text-xs text-gray-400">dopasowanie · {cf.offTargetCount} z {cf.behaviors.length} poza pasmem</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-5 rounded-xl p-5 border-l-4 flex items-center gap-4" style={{ borderColor: BRAND.green, background: BRAND.green + '0e' }}>
+            <FitnessRing pct={fitness.globalFitnessPct} color={BRAND.green} />
+            <div>
+              <div className="text-sm font-bold uppercase tracking-wide" style={{ color: '#0a8f5b' }}>Trafność całościowa</div>
+              <p className="text-[14px] text-gray-700 mt-1">
+                Średnie dopasowanie profilu do poziomów optymalnych wynosi {fitness.globalFitnessPct}%.
+                Im bliżej 100%, tym bardziej zachowania menedżera trafiają w poziom adekwatny do roli.
+              </p>
+            </div>
+          </div>
+        </Section>
+
         {/* 8 · ANALIZA GLOBALNA */}
         <Section>
           <Eyebrow color={BRAND.primary}>Profil całościowy · synteza pięciu kompetencji</Eyebrow>
@@ -437,7 +528,7 @@ export default function ReportView({ result, onReset }: Props) {
         </Section>
 
         {/* 9-13 · PIĘĆ KOMPETENCJI */}
-        {competencies.map((c, i) => <CompetencySection key={c.id} comp={c} idx={i} />)}
+        {competencies.map((c, i) => <CompetencySection key={c.id} comp={c} fit={fitById[c.id]} idx={i} />)}
 
         {/* 14 · PYTANIA OTWARTE */}
         <Section>

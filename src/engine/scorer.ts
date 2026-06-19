@@ -1,4 +1,5 @@
 import { COMPETENCIES, type RoleKey } from '../data/model';
+import type { FitnessResult } from './fitness';
 
 export interface SurveyAnswers {
   // key: behaviorId, value: score 1-6 per role
@@ -140,5 +141,35 @@ export function buildDemoResult(
     globalTop: sortedByOthers[0],
     globalBottom: sortedByOthers[sortedByOthers.length - 1],
     biggestGapComp: sortedByGap[0],
+  };
+}
+
+// Adapter: FitnessResult → ScoringResult, żeby istniejące sekcje raportu
+// (radar, heatmapa, tabele, luki percepcji) działały na nowym silniku trafności.
+export function fitnessToScoring(fitness: FitnessResult, persona: PersonaData): ScoringResult {
+  const competencies: CompetencyScore[] = fitness.competencies.map((cf) => {
+    const behaviorScores = cf.behaviors.map((b) => ({ id: b.id, text: b.text, avg: b.avgIntensity }));
+    const sorted = [...behaviorScores].sort((a, b) => b.avg - a.avg);
+    return {
+      id: cf.id,
+      name: cf.name,
+      color: cf.color,
+      avgByRole: cf.avgByRole,
+      avgOthers: cf.avgOthers,
+      gap: cf.perceptionGap,
+      behaviorScores,
+      topBehavior: sorted[0] ?? { text: '', avg: 0 },
+      bottomBehavior: sorted[sorted.length - 1] ?? { text: '', avg: 0 },
+    };
+  });
+  const byOthers = [...competencies].sort((a, b) => b.avgOthers - a.avgOthers);
+  const byGap = [...competencies].sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap));
+  return {
+    persona,
+    respondentCount: fitness.respondentCounts,
+    competencies,
+    globalTop: byOthers[0],
+    globalBottom: byOthers[byOthers.length - 1],
+    biggestGapComp: byGap[0],
   };
 }
