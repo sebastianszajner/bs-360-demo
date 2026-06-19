@@ -6,7 +6,7 @@
 import type {
   ModelConfig, CompetencyConfig, BehaviorConfig, RoleKey, FitnessState, ZoneConfig,
 } from '../data/modelConfig';
-import { DEFAULT_ZONES } from '../data/modelConfig';
+import { DEFAULT_ZONES, interpForState } from '../data/modelConfig';
 
 // Mapa stref: stan → konfiguracja strefy (etykieta, kolor, akcja). Z modelu lub domyślna.
 export type ZoneMap = Record<FitnessState, ZoneConfig>;
@@ -117,9 +117,7 @@ function sliderPosition(beh: BehaviorConfig, avg: number, scaleMin: number, scal
 }
 
 function pickInterp(beh: BehaviorConfig, state: FitnessState): string {
-  if (state === 'ok') return beh.interp.ok;
-  if (state === 'low' || state === 'far_low') return beh.interp.low;
-  return beh.interp.high || beh.interp.ok;
+  return interpForState(beh.interp, state);
 }
 
 function scoreBehavior(beh: BehaviorConfig, answers: RawAnswers, model: ModelConfig): BehaviorFitness {

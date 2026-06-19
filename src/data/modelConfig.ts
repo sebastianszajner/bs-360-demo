@@ -44,17 +44,34 @@ export const DEFAULT_ZONES: ZoneConfig[] = [
   { key: 'far_high', label: 'Zdecydowanie powyżej normy', short: 'wyraźny nadmiar', action: 'odpuść', color: '#ff5252' },
 ];
 
+// Opisy per strefa. far_low/far_high opcjonalne — jeśli puste, dziedziczą z low/high.
+// Dzięki temu osobno opisujemy "lekko za mało" i "wyraźnie za mało".
+export interface BehaviorInterp {
+  far_low?: string;      // wyraźny niedobór (jeśli puste, użyje 'low')
+  low: string;           // lekki niedobór / za mało
+  ok: string;            // w sam raz
+  high: string;          // lekki nadmiar / za dużo (dla monotonic nie pokazywana)
+  far_high?: string;     // wyraźny nadmiar (jeśli puste, użyje 'high')
+}
+
 export interface BehaviorConfig {
   id: string;
   text: string;
   type: BehaviorType;
   target: number;        // docelowe natężenie na skali (np. 4.5 z 6)
   tolerance: number;     // połowa szerokości pasma OK (np. 0.5 → OK = target ± 0.5)
-  interp: {
-    low: string;         // interpretacja "za mało"
-    ok: string;          // interpretacja "w sam raz"
-    high: string;        // interpretacja "za dużo" (dla monotonic zwykle nie pokazywana)
-  };
+  interp: BehaviorInterp;
+}
+
+// Wybór opisu dokładnie wg strefy, z dziedziczeniem far_* → low/high.
+export function interpForState(interp: BehaviorInterp, state: FitnessState): string {
+  switch (state) {
+    case 'far_low': return interp.far_low?.trim() || interp.low;
+    case 'low': return interp.low;
+    case 'ok': return interp.ok;
+    case 'high': return interp.high;
+    case 'far_high': return interp.far_high?.trim() || interp.high;
+  }
 }
 
 export interface CompetencyConfig {
@@ -160,9 +177,11 @@ export const DEFAULT_MODEL: ModelConfig = {
         {
           id: 'K2B1', text: 'Udziela regularnej informacji zwrotnej członkom zespołu', type: 'optimal', target: 4.5, tolerance: 0.6,
           interp: {
+            far_low: 'Informacja zwrotna praktycznie nie istnieje. Zespół pracuje bez sygnału, czy robi dobrze, czy źle. To realne ryzyko spadku zaangażowania i rotacji.',
             low: 'Informacja zwrotna pojawia się głównie jako reakcja na błąd. Brakuje rytmu feedbacku pozytywnego i rozwojowego.',
             ok: 'Feedback jest regularny i proporcjonalny. Zespół wie, na czym stoi, bez poczucia ciągłej oceny.',
             high: 'Feedback bywa zbyt częsty i drobiazgowy. Nadmiar uwag rozmywa to, co naprawdę ważne, i męczy zespół.',
+            far_high: 'Feedback jest tak intensywny, że zespół przestaje go słyszeć. Ciągłe uwagi do wszystkiego budują napięcie i wyuczoną bezradność.',
           },
         },
         {
@@ -286,9 +305,11 @@ export const DEFAULT_MODEL: ModelConfig = {
         {
           id: 'K5B1', text: 'Podejmuje decyzje szybko, gdy sytuacja tego wymaga', type: 'optimal', target: 4.5, tolerance: 0.6,
           interp: {
+            far_low: 'Decyzje grzęzną. Zespół czeka, procesy się zatrzymują. Paraliż decyzyjny kosztuje tempo całej operacji.',
             low: 'Decyzje bywają odkładane, co spowalnia zespół. Warto rozróżniać decyzje odwracalne (szybkie) od nieodwracalnych.',
             ok: 'Tempo decyzji jest trafne — szybkie tam, gdzie trzeba, rozważne przy sprawach nieodwracalnych.',
             high: 'Decyzje bywają zbyt pochopne. Szybkość kosztem konsultacji buduje dystans i ryzyko błędu.',
+            far_high: 'Decyzje zapadają błyskawicznie i bez konsultacji. Zespół przestaje rozumieć kierunek i traci poczucie wpływu na to, co się dzieje.',
           },
         },
         {
