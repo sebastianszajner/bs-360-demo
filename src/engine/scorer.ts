@@ -16,6 +16,7 @@ export interface PersonaData {
 export interface CompetencyScore {
   id: string;
   name: string;
+  color: string;
   avgByRole: Record<RoleKey, number>;
   avgOthers: number;
   gap: number;
@@ -70,6 +71,7 @@ export function scoreAnswers(
     return {
       id: comp.id,
       name: comp.name,
+      color: comp.color,
       avgByRole,
       avgOthers,
       gap,
@@ -118,6 +120,7 @@ export function buildDemoResult(
     return {
       id: comp.id,
       name: comp.name,
+      color: comp.color,
       avgByRole: roleAvg as Record<RoleKey, number>,
       avgOthers,
       gap,

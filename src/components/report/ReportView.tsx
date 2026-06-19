@@ -1,371 +1,530 @@
-import { useRef } from 'react';
-import type { ScoringResult } from '../../engine/scorer';
-import { ROLE_COLORS, ROLES, type RoleKey } from '../../data/model';
-import { generateRecs, generateGlobalAnalysis } from '../../data/recommendations';
+import type { ScoringResult, CompetencyScore } from '../../engine/scorer';
+import {
+  ROLE_SHORT, BRAND, COMPETENCIES, DISTRIBUTIONS, COMP_VOICES,
+  competencyZone, RESPONDENT_BREAKDOWN, type RoleKey,
+} from '../../data/model';
+import {
+  COMPETENCY_NARRATIVES, GLOBAL_ANALYSIS, KLUCZOWY_WNIOSEK, ANALITYKA_LUKI,
+  REFLEKSJA_LUKI, PYTANIA_OTWARTE, PLAN_DZIALAN, SLOWNIK, LEGENDA_KOLORY,
+  SCENARIUSZE, MANIFEST, SKALA,
+} from '../../data/reportContent';
 import RadarChartComponent from './RadarChart';
 import GapChart from './GapChart';
+import {
+  DonutScore, BehaviorBars, Histogram, Heatmap, GapLines, TopBottomBehaviors,
+  JohariWindow, RoleScoreRow,
+} from './ReportVisuals';
 
 interface Props {
   result: ScoringResult;
   onReset: () => void;
 }
 
-function ScoreBadge({ value, role }: { value: number; role: RoleKey }) {
+const ROLE_ORDER: RoleKey[] = ['sam', 'prz', 'wsp', 'pod'];
+
+/* ---------- helpery prezentacyjne ---------- */
+
+function Section({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <span
-      className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full"
-      style={{ background: ROLE_COLORS[role] + '18', color: ROLE_COLORS[role] }}
-    >
-      <span
-        className="inline-block w-2 h-2 rounded-full"
-        style={{ background: ROLE_COLORS[role] }}
-      />
-      {ROLES[role]}: {value.toFixed(1)}
+    <section className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-7 md:p-9 print-break ${className}`}>
+      {children}
+    </section>
+  );
+}
+
+function Eyebrow({ children, color = BRAND.suusGreen }: { children: React.ReactNode; color?: string }) {
+  return (
+    <div className="text-[11px] font-bold uppercase tracking-[0.12em] mb-1.5" style={{ color }}>
+      {children}
+    </div>
+  );
+}
+
+function H1({ children }: { children: React.ReactNode }) {
+  return <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-4" style={{ color: BRAND.suusNavy }}>{children}</h2>;
+}
+
+function H2({ children }: { children: React.ReactNode }) {
+  return <h3 className="text-base font-bold mb-2 mt-6" style={{ color: BRAND.primary }}>{children}</h3>;
+}
+
+function Para({ children }: { children: React.ReactNode }) {
+  return <p className="text-[15px] leading-relaxed text-gray-700 mb-3 text-justify">{children}</p>;
+}
+
+function gapMeta(gap: number) {
+  if (gap > 0.7) return { color: BRAND.orange, label: 'Duża luka — priorytet' };
+  if (gap > 0.4) return { color: '#e0920a', label: 'Umiarkowana luka' };
+  if (gap < -0.2) return { color: BRAND.suusGreen, label: 'Pozytywny wpływ' };
+  return { color: '#9ca3af', label: 'Mała luka — dobry wgląd' };
+}
+
+function GapBadge({ gap }: { gap: number }) {
+  const m = gapMeta(gap);
+  return (
+    <span className="inline-flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full whitespace-nowrap" style={{ background: m.color + '18', color: m.color }}>
+      {gap > 0 ? '+' : ''}{gap.toFixed(2)} {m.label}
     </span>
   );
 }
 
-function GapIndicator({ gap }: { gap: number }) {
-  const abs = Math.abs(gap);
-  const color = abs > 0.7 ? '#ef4444' : abs > 0.4 ? '#f59e0b' : '#10b981';
-  const label =
-    abs > 0.7
-      ? 'Duża luka — priorytet'
-      : abs > 0.4
-      ? 'Umiarkowana luka'
-      : 'Mała luka — dobry wgląd';
-
+function CompNum({ n, color }: { n: number; color: string }) {
   return (
-    <span
-      className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
-      style={{ background: color + '15', color }}
-    >
-      {gap > 0 ? '+' : ''}{gap.toFixed(2)} {label}
+    <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-white text-sm font-black shrink-0" style={{ background: color }}>
+      {n}
     </span>
   );
 }
+
+/* ---------- sekcja kompetencji ---------- */
+
+function CompetencySection({ comp, idx }: { comp: CompetencyScore; idx: number }) {
+  const narr = COMPETENCY_NARRATIVES[comp.id];
+  const def = COMPETENCIES.find((k) => k.id === comp.id)!;
+  const voice = COMP_VOICES[comp.id];
+  const zone = competencyZone(comp.avgOthers);
+
+  return (
+    <Section>
+      <Eyebrow color={comp.color}>Kompetencja {idx + 1} z 5 · Jan Kowalski</Eyebrow>
+      <div className="flex items-center gap-3 mb-1">
+        <CompNum n={idx + 1} color={comp.color} />
+        <h2 className="text-xl md:text-2xl font-black tracking-tight" style={{ color: BRAND.suusNavy }}>{def.name}</h2>
+      </div>
+      <div className="text-xs text-gray-400 mb-5 ml-10">6 min czytania · interpretacja · 6 kierunków rozwoju · 1 callout do refleksji</div>
+
+      <H2>Definicja kompetencji</H2>
+      <Para>{def.definition}</Para>
+
+      <H2>Wynik w jednym spojrzeniu</H2>
+      <div className="grid md:grid-cols-[auto_1fr] gap-6 items-center mb-2">
+        <DonutScore value={comp.avgOthers} color={comp.color} label={zone} />
+        <div className="space-y-3">
+          <RoleScoreRow comp={comp} />
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-500">Średnia z otoczenia <b style={{ color: BRAND.suusNavy }}>{comp.avgOthers.toFixed(2)}</b></span>
+            <GapBadge gap={comp.gap} />
+          </div>
+        </div>
+      </div>
+
+      <H2>Szczegółowe zachowania w tej kompetencji</H2>
+      <p className="text-sm text-gray-500 mb-3">Średnia ocena otoczenia dla każdego ze składowych zachowań:</p>
+      <BehaviorBars comp={comp} />
+
+      <H2>Rozkład odpowiedzi 11 respondentów</H2>
+      <p className="text-sm text-gray-500 mb-1">Im bardziej rozkład jest skupiony po prawej, tym wyższa zgodność oceny.</p>
+      <Histogram dist={DISTRIBUTIONS[comp.id]} color={comp.color} />
+
+      <H2>Interpretacja i kierunek rozwoju</H2>
+      <Para>{narr.wprowadzenie}</Para>
+      <Para>{narr.znaczenie}</Para>
+      <div className="border-l-4 pl-4 py-1 my-3 italic text-[15px] text-gray-600" style={{ borderColor: comp.color }}>
+        {narr.kierunek}
+      </div>
+
+      <H2>Sześć kierunków rozwoju w tej kompetencji</H2>
+      <div className="grid md:grid-cols-2 gap-x-6 gap-y-5 mt-2">
+        {narr.punkty.map(([tytul, opis], i) => (
+          <div key={i}>
+            <div className="flex items-start gap-2 mb-1">
+              <span className="text-sm font-black shrink-0" style={{ color: comp.color }}>#{i + 1}</span>
+              <span className="text-sm font-bold text-gray-800">{tytul}</span>
+            </div>
+            <p className="text-[13px] leading-relaxed text-gray-600 text-justify">{opis}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-5 mt-7">
+        <div className="rounded-xl p-4" style={{ background: BRAND.suusGreen + '0e' }}>
+          <div className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: BRAND.suusGreen }}>Rekomendowane działania</div>
+          <ul className="space-y-1.5">
+            {narr.dzialania.map((d, i) => (
+              <li key={i} className="text-[13px] text-gray-700 flex gap-2"><span style={{ color: BRAND.suusGreen }}>•</span><span>{d}</span></li>
+            ))}
+          </ul>
+        </div>
+        <div className="rounded-xl p-4" style={{ background: BRAND.secondary + '0e' }}>
+          <div className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: BRAND.secondary }}>Wskaźniki postępu</div>
+          <ul className="space-y-1.5">
+            {narr.wskazniki.map((w, i) => (
+              <li key={i} className="text-[13px] text-gray-700 flex gap-2"><span style={{ color: BRAND.secondary }}>•</span><span>{w}</span></li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <H2>Głosy zespołu — co mówią respondenci</H2>
+      <blockquote className="border-l-4 pl-4 py-2 italic text-gray-700" style={{ borderColor: comp.color }}>
+        „{voice.text}”
+        <footer className="text-sm text-gray-400 not-italic mt-1">— {voice.author}</footer>
+      </blockquote>
+    </Section>
+  );
+}
+
+/* ---------- główny widok ---------- */
 
 export default function ReportView({ result, onReset }: Props) {
-  const reportRef = useRef<HTMLDivElement>(null);
-
-  const globalAnalysis = generateGlobalAnalysis(
-    Object.fromEntries(
-      result.competencies.map((c) => [
-        c.id,
-        c.avgByRole as Record<string, number>,
-      ])
-    )
-  );
-
-  function handlePrint() {
-    window.print();
-  }
-
-  const roles: RoleKey[] = ['sam', 'prz', 'wsp', 'pod'];
+  const { competencies, persona } = result;
+  const byOthers = [...competencies].sort((a, b) => b.avgOthers - a.avgOthers);
+  const top3 = byOthers.slice(0, 3);
+  const bottom3 = [...competencies].sort((a, b) => b.gap - a.gap).slice(0, 3);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top action bar */}
-      <div className="no-print sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm">
-        <button
-          onClick={onReset}
-          className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
-        >
-          ← Nowe badanie
-        </button>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-400 bg-amber-50 text-amber-600 px-2 py-1 rounded font-medium">
-            DEMO — Przykładowy raport
-          </span>
-          <button
-            onClick={handlePrint}
-            className="px-4 py-2 text-sm font-semibold text-white rounded-lg shadow-md hover:opacity-90 transition"
-            style={{ background: '#7a00df' }}
-          >
+      {/* HEADER */}
+      <div className="no-print sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-gray-100">
+        <div className="max-w-4xl mx-auto px-5 py-3 flex items-center justify-between">
+          <button onClick={onReset} className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1">← Nowe badanie</button>
+          <div className="text-xs text-gray-400 hidden sm:block">Raport rozwojowy 360° · SUUS Logistics</div>
+          <button onClick={() => window.print()} className="text-sm font-semibold text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90" style={{ background: BRAND.primary }}>
             Pobierz PDF
           </button>
         </div>
       </div>
 
-      <div ref={reportRef} className="report-container max-w-4xl mx-auto px-4 py-8 space-y-8">
-        {/* Cover */}
-        <div
-          className="rounded-2xl p-8 text-white report-section"
-          style={{ background: 'linear-gradient(135deg, #7a00df 0%, #0693e3 100%)' }}
-        >
-          <div className="flex items-start justify-between mb-8">
-            <div>
-              <p className="text-purple-200 text-xs uppercase tracking-widest mb-1">Brain Stream</p>
-              <p className="text-white/80 text-sm">Raport 360 stopni</p>
-            </div>
-            <div
-              className="px-3 py-1 rounded-full text-xs font-bold"
-              style={{ background: 'rgba(255,255,255,0.2)' }}
-            >
-              DEMO
-            </div>
-          </div>
-          <h1 className="text-3xl font-bold mb-2">{result.persona.name}</h1>
-          <p className="text-purple-100 text-lg mb-1">{result.persona.position}</p>
-          <p className="text-purple-200 text-sm">{result.persona.location}</p>
-          <div className="mt-6 flex flex-wrap gap-4 text-sm text-purple-100">
-            <span>Badanie: {result.persona.tenure}</span>
-            <span>Respondenci: {Object.values(result.respondentCount).reduce((a, b) => a + b, 0)} osób</span>
-            <span>Kompetencje: 5</span>
-          </div>
-        </div>
+      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
 
-        {/* Wyniki w pigułce */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 report-section">
-          <h2 className="text-lg font-bold text-gray-800 mb-4">Wyniki w pigułce</h2>
+        {/* 1 · COVER / BRIEFING WYKONAWCZY */}
+        <Section className="overflow-hidden !p-0">
+          <div className="p-8 md:p-10 text-white" style={{ background: `linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.secondary} 55%, ${BRAND.suusNavy} 100%)` }}>
+            <div className="flex justify-between items-start">
+              <div>
+                <div className="text-white/70 text-sm tracking-wide">Brain Stream · SUUS Logistics</div>
+                <div className="text-white/90 text-lg font-light mt-1">Raport rozwojowy 360°</div>
+              </div>
+              <span className="text-xs font-bold bg-white/15 px-3 py-1 rounded-full">DEMO</span>
+            </div>
+            <h1 className="text-4xl md:text-5xl font-black mt-6">{persona.name}</h1>
+            <div className="text-white/90 text-lg mt-1">{persona.position}</div>
+            <div className="text-white/70">{persona.location}</div>
+            <div className="flex flex-wrap gap-x-6 gap-y-1 mt-5 text-sm text-white/80">
+              <span>Badanie: {persona.tenure ? 'marzec 2026' : 'marzec 2026'}</span>
+              <span>Respondenci: 11 osób</span>
+              <span>Kompetencje: 5</span>
+            </div>
+          </div>
+          <div className="p-7 md:p-9">
+            <Eyebrow>Briefing wykonawczy · 2 minuty czytania</Eyebrow>
+            <Para>
+              Jeśli masz tylko 2 minuty na ten raport, przeczytaj tę stronę. Znajdziesz tu pięć wyników, trzy mocne strony,
+              trzy obszary do rozwoju i kluczowy wniosek całego badania.
+            </Para>
+            <div className="grid md:grid-cols-2 gap-5 mt-4">
+              <div className="rounded-xl p-5" style={{ background: BRAND.suusGreen + '0e' }}>
+                <div className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: BRAND.suusGreen }}>Twoje 3 mocne strony</div>
+                {top3.map((c, i) => (
+                  <div key={c.id} className="flex justify-between items-baseline py-1 border-b border-gray-100 last:border-0">
+                    <span className="text-sm text-gray-700"><b>#{i + 1}</b> {COMPETENCIES.find((k) => k.id === c.id)?.nameShort}</span>
+                    <span className="text-sm font-bold" style={{ color: BRAND.suusNavy }}>{c.avgOthers.toFixed(2)}/6</span>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-xl p-5" style={{ background: BRAND.orange + '0e' }}>
+                <div className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: BRAND.orange }}>Twoje 3 obszary do rozwoju</div>
+                {bottom3.map((c, i) => (
+                  <div key={c.id} className="flex justify-between items-baseline py-1 border-b border-gray-100 last:border-0">
+                    <span className="text-sm text-gray-700"><b>#{i + 1}</b> {COMPETENCIES.find((k) => k.id === c.id)?.nameShort}</span>
+                    <span className="text-sm font-bold" style={{ color: BRAND.orange }}>luka +{c.gap.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="mt-6 rounded-xl p-5 border-l-4" style={{ borderColor: BRAND.suusNavy, background: '#f4f8fc' }}>
+              <div className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: BRAND.suusNavy }}>Kluczowy wniosek całego raportu</div>
+              <p className="text-[15px] leading-relaxed text-gray-700">{KLUCZOWY_WNIOSEK}</p>
+            </div>
+          </div>
+        </Section>
+
+        {/* 2 · LEGENDA */}
+        <Section>
+          <H1>Legenda raportu</H1>
+          <Para>Ten raport ma jeden spójny język wizualny. Poniższa legenda pokazuje, co znaczą poszczególne kolory i bloki.</Para>
+          <div className="space-y-2 mt-3">
+            {LEGENDA_KOLORY.map(([hex, label, desc]) => (
+              <div key={label} className="flex items-start gap-3">
+                <span className="w-8 h-8 rounded-md shrink-0 mt-0.5" style={{ background: hex }} />
+                <div>
+                  <div className="text-sm font-bold" style={{ color: BRAND.suusNavy }}>{label}</div>
+                  <div className="text-[13px] text-gray-500">{desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        {/* 3 · JAK CZYTAĆ */}
+        <Section>
+          <H1>Jak czytać ten raport</H1>
+          <Para>Raport został zaprojektowany tak, abyś mógł skorzystać z niego niezależnie od tego, czy masz 10, 30, czy 90 minut.</Para>
+          <div className="grid md:grid-cols-3 gap-4 mt-4">
+            {SCENARIUSZE.map((s) => (
+              <div key={s.czas} className="rounded-xl border border-gray-100 p-4">
+                <div className="text-2xl font-black" style={{ color: BRAND.primary }}>{s.czas}</div>
+                <div className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2">{s.nazwa}</div>
+                <ul className="space-y-1.5">
+                  {s.punkty.map((p, i) => (
+                    <li key={i} className="text-[13px] text-gray-600 flex gap-1.5"><span style={{ color: BRAND.primary }}>•</span><span>{p}</span></li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        {/* 4 · SŁOWNIK + JOHARI */}
+        <Section>
+          <H1>Słownik kluczowych pojęć</H1>
+          <div className="grid md:grid-cols-3 gap-4">
+            {SLOWNIK.map((s) => (
+              <div key={s.termin} className="rounded-xl p-4" style={{ background: '#f6f7f9' }}>
+                <div className="text-sm font-bold mb-1" style={{ color: BRAND.primary }}>{s.termin}</div>
+                <div className="text-[13px] leading-relaxed text-gray-600">{s.opis}</div>
+              </div>
+            ))}
+          </div>
+          <H2>Okno Johariego — Twoja mapa świadomości</H2>
+          <p className="text-sm text-gray-500 mb-3">Cztery ćwiartki świadomości kompetencji w zależności od tego, co Ty wiesz o sobie i co wiedzą inni (Luft i Ingham, 1955).</p>
+          <JohariWindow competencies={competencies} />
+        </Section>
+
+        {/* 5 · METODOLOGIA */}
+        <Section>
+          <H1>Metodologia w pigułce</H1>
+          <Para>
+            Badanie 360° to forma informacji zwrotnej, w której na ten sam zestaw zachowań menedżerskich odpowiada kilka grup
+            respondentów: menedżer ocenia siebie, jego przełożony, współpracownicy oraz pracownicy podlegli. Różnice między
+            tymi perspektywami są najcenniejszą informacją.
+          </Para>
+          <div className="grid md:grid-cols-2 gap-6 mt-3">
+            <div>
+              <H2>Kto wziął udział w badaniu</H2>
+              <div className="space-y-1">
+                {RESPONDENT_BREAKDOWN.map((r) => (
+                  <div key={r.role} className="flex justify-between text-sm border-b border-gray-100 py-1.5">
+                    <span className="text-gray-600">{r.label}</span><span className="font-bold" style={{ color: BRAND.suusNavy }}>{r.count}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between text-sm py-1.5 font-bold">
+                  <span>RAZEM</span><span style={{ color: BRAND.suusNavy }}>11</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <H2>Skala odpowiedzi 1–6</H2>
+              <div className="space-y-1">
+                {SKALA.map(([n, d]) => (
+                  <div key={n} className="flex gap-2 text-[13px]">
+                    <span className="font-bold w-4 shrink-0" style={{ color: BRAND.primary }}>{n}</span>
+                    <span className="text-gray-600">{d}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Section>
+
+        {/* 6 · WYNIKI W PIGUŁCE */}
+        <Section>
+          <Eyebrow>Pięć kompetencji menedżerskich · ocena z otoczenia</Eyebrow>
+          <H1>Wyniki w pigułce</H1>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="text-left pb-3 text-gray-500 font-medium">Kompetencja</th>
-                  {roles.map((r) => (
-                    <th key={r} className="text-center pb-3 font-medium" style={{ color: ROLE_COLORS[r] }}>
-                      {ROLES[r]}
-                    </th>
-                  ))}
-                  <th className="text-center pb-3 text-gray-500 font-medium">Luka</th>
+                <tr className="text-left border-b-2" style={{ borderColor: BRAND.suusNavy }}>
+                  <th className="py-2 pr-2 font-semibold text-gray-500">Kompetencja</th>
+                  {ROLE_ORDER.map((r) => <th key={r} className="py-2 px-1.5 text-center font-semibold" style={{ color: BRAND.suusNavy }}>{ROLE_SHORT[r]}</th>)}
+                  <th className="py-2 px-1.5 text-center font-semibold text-gray-500">Śr.</th>
+                  <th className="py-2 pl-2 text-center font-semibold text-gray-500">Luka</th>
                 </tr>
               </thead>
               <tbody>
-                {result.competencies.map((c) => (
-                  <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50">
-                    <td className="py-3 font-medium text-gray-700">
-                      <span
-                        className="inline-block w-6 h-6 rounded text-white text-xs font-bold text-center leading-6 mr-2"
-                        style={{ background: '#7a00df' }}
-                      >
-                        {c.id.replace('K', '')}
-                      </span>
-                      {c.name}
+                {competencies.map((c, i) => (
+                  <tr key={c.id} className="border-b border-gray-100">
+                    <td className="py-2.5 pr-2">
+                      <div className="flex items-center gap-2">
+                        <CompNum n={i + 1} color={c.color} />
+                        <span className="text-gray-700">{COMPETENCIES.find((k) => k.id === c.id)?.name}</span>
+                      </div>
                     </td>
-                    {roles.map((r) => (
-                      <td key={r} className="text-center py-3">
-                        <span
-                          className="inline-block w-10 h-7 rounded text-xs font-bold text-center leading-7"
-                          style={{
-                            background: ROLE_COLORS[r] + '18',
-                            color: ROLE_COLORS[r],
-                          }}
-                        >
-                          {c.avgByRole[r].toFixed(1)}
-                        </span>
-                      </td>
+                    {ROLE_ORDER.map((r) => (
+                      <td key={r} className="py-2.5 px-1.5 text-center font-bold" style={{ color: r === 'sam' ? BRAND.primary : BRAND.suusNavy }}>{c.avgByRole[r].toFixed(1)}</td>
                     ))}
-                    <td className="text-center py-3">
-                      <GapIndicator gap={c.gap} />
-                    </td>
+                    <td className="py-2.5 px-1.5 text-center font-bold text-gray-400">{c.avgOthers.toFixed(2)}</td>
+                    <td className="py-2.5 pl-2 text-center"><GapBadge gap={c.gap} /></td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <p className="text-xs text-gray-400 mt-3">Skala 1-6 (trafność zachowania) · Luka = samoocena minus średnia innych</p>
-        </div>
+          <p className="text-xs text-gray-400 mt-3">Średnia obliczona z ocen przełożonego, współpracowników i podwładnych (bez samooceny). Skala 1–6.</p>
+        </Section>
 
-        {/* Wykresy */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 report-section">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <h3 className="text-sm font-bold text-gray-700 mb-4">Profil kompetencji (radar)</h3>
-            <RadarChartComponent competencies={result.competencies} />
-          </div>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <h3 className="text-sm font-bold text-gray-700 mb-4">Porównanie perspektyw</h3>
-            <GapChart competencies={result.competencies} />
-          </div>
-        </div>
-
-        {/* Analiza globalna AI */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 report-section">
-          <div className="flex items-center gap-2 mb-4">
-            <div
-              className="px-2 py-0.5 rounded text-xs font-bold"
-              style={{ background: '#7a00df18', color: '#7a00df' }}
-            >
-              Analiza AI
+        {/* 7 · ANALITYKA POGŁĘBIONA */}
+        <Section>
+          <Eyebrow>Cztery spojrzenia: pajęczyna, mapa cieplna, luki, top/bottom</Eyebrow>
+          <H1>Analityka pogłębiona</H1>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <H2>Pełny profil — pajęczyna kompetencji</H2>
+              <RadarChartComponent competencies={competencies} />
             </div>
-            <h2 className="text-lg font-bold text-gray-800">Profil rozwojowy — analiza globalna</h2>
-          </div>
-
-          <p className="text-gray-600 text-sm leading-relaxed mb-6">{globalAnalysis.summary}</p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div className="rounded-xl p-4" style={{ background: '#00d08410' }}>
-              <p className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: '#00d084' }}>
-                Mocne strony (top kompetencje)
-              </p>
-              {globalAnalysis.strengths.map((s, i) => (
-                <div key={i} className="mb-3 last:mb-0">
-                  <p className="font-semibold text-gray-800 text-sm">{s.title}</p>
-                  <p className="text-gray-500 text-xs mt-0.5">{s.desc}</p>
-                </div>
-              ))}
-            </div>
-            <div className="rounded-xl p-4" style={{ background: '#ff690010' }}>
-              <p className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: '#ff6900' }}>
-                Priorytety rozwojowe
-              </p>
-              {globalAnalysis.developments.map((d, i) => (
-                <div key={i} className="mb-3 last:mb-0">
-                  <p className="font-semibold text-gray-800 text-sm">{d.title}</p>
-                  <p className="text-gray-500 text-xs mt-0.5">{d.desc}</p>
-                </div>
-              ))}
+            <div>
+              <H2>Porównanie perspektyw</H2>
+              <GapChart competencies={competencies} />
             </div>
           </div>
-
-          <div className="rounded-xl p-4 border border-amber-100" style={{ background: '#fefce8' }}>
-            <p className="text-xs font-bold text-amber-700 uppercase tracking-wide mb-2">
-              Kluczowy wniosek z badania
-            </p>
-            <p className="text-sm text-gray-700 leading-relaxed">{globalAnalysis.keyInsight}</p>
+          <H2>Mapa cieplna: kompetencje × grupy oceniające</H2>
+          <p className="text-sm text-gray-500 mb-3">Im ciemniejsza komórka, tym wyższa ocena. Pokazuje, gdzie zespół jest jednomyślny.</p>
+          <Heatmap competencies={competencies} />
+          <H2>Luki percepcji — samoocena na tle ocen otoczenia</H2>
+          <GapLines competencies={competencies} />
+          <div className="mt-5 rounded-xl p-5 border-l-4" style={{ borderColor: BRAND.suusNavy, background: '#f4f8fc' }}>
+            <div className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: BRAND.suusNavy }}>Co ten wykres pokazuje — wnioski z badania</div>
+            {ANALITYKA_LUKI.map((p, i) => <p key={i} className="text-[14px] leading-relaxed text-gray-700 mb-2 last:mb-0">{p}</p>)}
           </div>
-        </div>
+          <div className="mt-4 rounded-xl p-5" style={{ background: BRAND.orange + '0e' }}>
+            <div className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: BRAND.orange }}>Pytanie do samodzielnej refleksji</div>
+            <p className="text-[14px] leading-relaxed text-gray-700">{REFLEKSJA_LUKI}</p>
+          </div>
+          <H2>Pięć najmocniejszych i pięć rozwojowych zachowań</H2>
+          <TopBottomBehaviors competencies={competencies} />
+        </Section>
 
-        {/* Rekomendacje per kompetencja */}
-        {result.competencies.map((comp) => {
-          const rec = generateRecs(
-            comp.id,
-            comp.avgByRole.sam,
-            comp.avgOthers,
-            'pod'
-          );
+        {/* 8 · ANALIZA GLOBALNA */}
+        <Section>
+          <Eyebrow color={BRAND.primary}>Profil całościowy · synteza pięciu kompetencji</Eyebrow>
+          <H1>Analiza globalna</H1>
+          {GLOBAL_ANALYSIS.wprowadzenie.map((p, i) => <Para key={i}>{p}</Para>)}
+          <H2>Główne wnioski z perspektywy całościowej</H2>
+          {GLOBAL_ANALYSIS.wnioski_glowne.map((p, i) => <Para key={i}>{p}</Para>)}
 
-          return (
-            <div
-              key={comp.id}
-              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 report-section print-break"
-            >
-              {/* Nagłówek kompetencji */}
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span
-                      className="w-8 h-8 rounded-lg text-white text-sm font-bold flex items-center justify-center"
-                      style={{ background: '#7a00df' }}
-                    >
-                      {comp.id.replace('K', '')}
-                    </span>
-                    <h3 className="text-lg font-bold text-gray-800">{comp.name}</h3>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {roles.map((r) => (
-                      comp.avgByRole[r] > 0 && (
-                        <ScoreBadge key={r} value={comp.avgByRole[r]} role={r} />
-                      )
-                    ))}
-                    <GapIndicator gap={comp.gap} />
-                  </div>
-                </div>
+          <H2>Mocne strony ujawniające się w obrazie globalnym</H2>
+          <div className="grid md:grid-cols-2 gap-4">
+            {GLOBAL_ANALYSIS.mocne_strony.map(([t, d]) => (
+              <div key={t} className="rounded-xl p-4 border-l-4" style={{ borderColor: BRAND.suusGreen, background: BRAND.suusGreen + '0a' }}>
+                <div className="text-sm font-bold mb-1" style={{ color: BRAND.suusNavy }}>{t}</div>
+                <div className="text-[13px] leading-relaxed text-gray-600">{d}</div>
               </div>
+            ))}
+          </div>
 
-              {/* Scores per behavior */}
-              <div className="mb-5">
-                {comp.behaviorScores.map((b) => (
-                  <div key={b.id} className="flex items-center gap-3 py-1.5 border-b border-gray-50 last:border-0">
-                    <div className="flex-1 text-xs text-gray-600">{b.text}</div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full"
-                          style={{
-                            width: `${(b.avg / 6) * 100}%`,
-                            background: '#7a00df',
-                          }}
-                        />
-                      </div>
-                      <span className="text-xs font-bold text-gray-700 w-7 text-right">
-                        {b.avg.toFixed(1)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+          <H2>Kluczowe obszary do rozwoju</H2>
+          <div className="grid md:grid-cols-2 gap-4">
+            {GLOBAL_ANALYSIS.obszary_rozwoju.map(([t, d]) => (
+              <div key={t} className="rounded-xl p-4 border-l-4" style={{ borderColor: BRAND.orange, background: BRAND.orange + '0a' }}>
+                <div className="text-sm font-bold mb-1" style={{ color: BRAND.suusNavy }}>{t}</div>
+                <div className="text-[13px] leading-relaxed text-gray-600">{d}</div>
               </div>
+            ))}
+          </div>
 
-              {/* AI interpretacja */}
-              <div className="rounded-xl p-4 mb-4" style={{ background: '#7a00df08', border: '1px solid #7a00df20' }}>
-                <p className="text-xs font-bold mb-2 uppercase tracking-wide" style={{ color: '#7a00df' }}>
-                  Interpretacja AI
-                </p>
-                <p className="text-sm text-gray-700 leading-relaxed">{rec.intro}</p>
-                <p className="text-sm text-gray-600 leading-relaxed mt-2 italic">{rec.direction}</p>
+          <H2>Synteza profilu kompetencyjnego</H2>
+          {GLOBAL_ANALYSIS.synteza.map((p, i) => <Para key={i}>{p}</Para>)}
+
+          <H2>Rekomendacje końcowe — kierunki dalszej pracy</H2>
+          <div className="space-y-3">
+            {GLOBAL_ANALYSIS.kierunki_koncowe.map(([t, d]) => (
+              <div key={t}>
+                <div className="text-sm font-bold" style={{ color: BRAND.primary }}>{t}</div>
+                <p className="text-[14px] leading-relaxed text-gray-600">{d}</p>
               </div>
+            ))}
+          </div>
+        </Section>
 
-              {/* Rekomendacja 1 */}
-              <div className="rounded-xl border border-gray-100 p-4 mb-3">
-                <p className="font-semibold text-gray-800 text-sm mb-2">
-                  Rekomendacja 1: {rec.keyRec.title}
-                </p>
-                <p className="text-xs text-gray-600 leading-relaxed mb-3">{rec.keyRec.body}</p>
-                <div className="mb-2">
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Działania:</p>
-                  <ul className="space-y-1">
-                    {rec.keyRec.actions.map((a, i) => (
-                      <li key={i} className="flex gap-2 text-xs text-gray-600">
-                        <span style={{ color: '#7a00df' }} className="font-bold shrink-0">•</span>
-                        {a}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Wskaźniki sukcesu:</p>
-                  <ul className="space-y-1">
-                    {rec.keyRec.indicators.map((ind, i) => (
-                      <li key={i} className="flex gap-2 text-xs text-gray-500">
-                        <span style={{ color: '#00d084' }} className="font-bold shrink-0">✓</span>
-                        {ind}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+        {/* 9-13 · PIĘĆ KOMPETENCJI */}
+        {competencies.map((c, i) => <CompetencySection key={c.id} comp={c} idx={i} />)}
+
+        {/* 14 · PYTANIA OTWARTE */}
+        <Section>
+          <H1>Pytania otwarte</H1>
+          <H2>Za co najbardziej cenisz opisywaną osobę?</H2>
+          <div className="space-y-2">
+            {PYTANIA_OTWARTE.za_co.map(([autor, cytat], i) => (
+              <blockquote key={i} className="border-l-3 pl-3 py-1 text-[14px] text-gray-700" style={{ borderLeft: `3px solid ${BRAND.suusGreen}` }}>
+                „{cytat}” <span className="text-gray-400 text-sm">— {autor}</span>
+              </blockquote>
+            ))}
+          </div>
+          <H2>Co warto rozwijać lub zmienić w sposobie pracy tej osoby?</H2>
+          <div className="space-y-2">
+            {PYTANIA_OTWARTE.do_rozwoju.map(([autor, cytat], i) => (
+              <blockquote key={i} className="border-l-3 pl-3 py-1 text-[14px] text-gray-700" style={{ borderLeft: `3px solid ${BRAND.orange}` }}>
+                „{cytat}” <span className="text-gray-400 text-sm">— {autor}</span>
+              </blockquote>
+            ))}
+          </div>
+        </Section>
+
+        {/* 15 · PLAN DZIAŁAŃ */}
+        <Section>
+          <Eyebrow color={BRAND.primary}>Rozdział końcowy</Eyebrow>
+          <H1>Plan działań na najbliższe 90 dni</H1>
+          <Para>Trzy priorytety w trzech horyzontach czasowych. Zasada jest jedna: skupiamy się na trzech rzeczach i się ich trzymamy.</Para>
+
+          <H2>Trzy obszary do utrzymania i wzmacniania</H2>
+          <div className="grid md:grid-cols-3 gap-4">
+            {PLAN_DZIALAN.utrzymac.map(([t, d], i) => (
+              <div key={i} className="rounded-xl p-4" style={{ background: BRAND.suusGreen + '0e' }}>
+                <div className="text-xs font-bold mb-1" style={{ color: BRAND.suusGreen }}>#{i + 1}</div>
+                <div className="text-sm font-bold mb-1" style={{ color: BRAND.suusNavy }}>{t}</div>
+                <div className="text-[13px] text-gray-600">{d}</div>
               </div>
+            ))}
+          </div>
 
-              {/* Rekomendacja 2 */}
-              <div className="rounded-xl border border-gray-100 p-4 mb-3">
-                <p className="font-semibold text-gray-800 text-sm mb-2">
-                  Rekomendacja 2: {rec.secondRec.title}
-                </p>
-                <p className="text-xs text-gray-600 leading-relaxed mb-3">{rec.secondRec.body}</p>
-                <div>
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Działania:</p>
-                  <ul className="space-y-1">
-                    {rec.secondRec.actions.map((a, i) => (
-                      <li key={i} className="flex gap-2 text-xs text-gray-600">
-                        <span style={{ color: '#7a00df' }} className="font-bold shrink-0">•</span>
-                        {a}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+          <H2>Trzy obszary wymagające zmiany</H2>
+          <div className="grid md:grid-cols-3 gap-4">
+            {PLAN_DZIALAN.zmienic.map(([t, d], i) => (
+              <div key={i} className="rounded-xl p-4" style={{ background: BRAND.orange + '0e' }}>
+                <div className="text-xs font-bold mb-1" style={{ color: BRAND.orange }}>#{i + 1}</div>
+                <div className="text-sm font-bold mb-1" style={{ color: BRAND.suusNavy }}>{t}</div>
+                <div className="text-[13px] text-gray-600">{d}</div>
               </div>
+            ))}
+          </div>
 
-              {/* Na co zwrócić uwagę */}
-              <div className="rounded-xl p-3" style={{ background: '#f8f9fa' }}>
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
-                  Pytania do refleksji
-                </p>
-                <ul className="space-y-1">
-                  {rec.watchFor.map((w, i) => (
-                    <li key={i} className="text-xs text-gray-500 flex gap-2">
-                      <span className="text-gray-400 shrink-0">?</span>
-                      {w}
-                    </li>
-                  ))}
+          <div className="space-y-4 mt-6">
+            {PLAN_DZIALAN.priorytety.map((p, i) => (
+              <div key={i} className="rounded-xl border border-gray-100 p-5">
+                <div className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: i === 0 ? BRAND.orange : i === 1 ? BRAND.secondary : BRAND.primary }}>{p.naglowek}</div>
+                <div className="text-base font-black mb-2" style={{ color: BRAND.suusNavy }}>{p.tytul}</div>
+                {p.tresc.map((t, j) => <p key={j} className="text-[14px] leading-relaxed text-gray-700 mb-1.5">{t}</p>)}
+              </div>
+            ))}
+          </div>
+
+          <H2>Co dalej? Wybierz swoją ścieżkę wdrożenia</H2>
+          <div className="grid md:grid-cols-3 gap-4">
+            {PLAN_DZIALAN.sciezki.map((s) => (
+              <div key={s.nr} className="rounded-xl border border-gray-100 p-4">
+                <div className="text-xs font-bold uppercase tracking-wide text-gray-400">{s.nr}</div>
+                <div className="text-sm font-black mb-2" style={{ color: BRAND.primary }}>{s.tytul}</div>
+                <ul className="space-y-1.5">
+                  {s.kroki.map((k, i) => <li key={i} className="text-[13px] text-gray-600 flex gap-1.5"><span style={{ color: BRAND.primary }}>•</span><span>{k}</span></li>)}
                 </ul>
               </div>
-            </div>
-          );
-        })}
+            ))}
+          </div>
+        </Section>
 
-        {/* Footer */}
-        <div className="text-center py-4 text-xs text-gray-400">
-          <p>Raport wygenerowany przez system Brain Stream 360°</p>
-          <p className="mt-1">brain-stream.pl · Wersja demonstracyjna</p>
+        {/* 16 · MANIFEST */}
+        <Section className="!p-0 overflow-hidden">
+          <div className="p-9 md:p-12 text-white" style={{ background: `linear-gradient(135deg, ${BRAND.suusNavy} 0%, ${BRAND.primary} 100%)` }}>
+            <div className="text-2xl md:text-3xl font-black mb-4">{MANIFEST.naglowek}</div>
+            <p className="text-white/85 text-[15px] leading-relaxed max-w-2xl">{MANIFEST.tresc}</p>
+            <div className="text-white/50 text-xs mt-8">{MANIFEST.podpis}</div>
+          </div>
+        </Section>
+
+        <div className="no-print text-center py-4">
+          <button onClick={() => window.print()} className="text-sm font-semibold text-white px-6 py-3 rounded-xl shadow hover:opacity-90" style={{ background: BRAND.primary }}>
+            Pobierz raport jako PDF
+          </button>
         </div>
       </div>
     </div>

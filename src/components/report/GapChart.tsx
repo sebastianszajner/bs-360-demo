@@ -10,7 +10,7 @@ import {
   Cell,
 } from 'recharts';
 import type { CompetencyScore } from '../../engine/scorer';
-import { ROLE_COLORS, ROLES, type RoleKey } from '../../data/model';
+import { COMPETENCIES, ROLE_COLORS, ROLES, type RoleKey } from '../../data/model';
 
 interface Props {
   competencies: CompetencyScore[];
@@ -19,20 +19,24 @@ interface Props {
 const ROLES_TO_SHOW: RoleKey[] = ['sam', 'prz', 'wsp', 'pod'];
 
 export default function GapChart({ competencies }: Props) {
+  const shortNames = Object.fromEntries(COMPETENCIES.map((c) => [c.id, c.nameShort]));
   const data = competencies.map((c) => ({
-    name: c.name.replace(' operacyjnym', '').replace(' i adaptacja', '').replace(' i feedback rozwojowy', ' i feedback').replace(' i partnerstwo biznesowe', ''),
+    name: shortNames[c.id] ?? c.id,
     ...Object.fromEntries(ROLES_TO_SHOW.map((r) => [r, +c.avgByRole[r].toFixed(2)])),
     gap: +(c.gap).toFixed(2),
   }));
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={data} barCategoryGap="25%" barGap={2}>
+    <ResponsiveContainer width="100%" height={320}>
+      <BarChart data={data} barCategoryGap="22%" barGap={1} margin={{ bottom: 40 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
         <XAxis
           dataKey="name"
           tick={{ fontSize: 9, fill: '#666' }}
           interval={0}
+          angle={-20}
+          textAnchor="end"
+          height={50}
         />
         <YAxis domain={[0, 6]} tick={{ fontSize: 10, fill: '#666' }} />
         <Tooltip
