@@ -7,9 +7,11 @@ import { fitnessToScoring, type ScoringResult, type PersonaData } from './engine
 import SurveyForm from './components/survey/SurveyForm';
 import ReportView from './components/report/ReportView';
 import ReportIntro from './components/report/ReportIntro';
+import SupervisorReport from './components/report/SupervisorReport';
+import HRReport from './components/report/HRReport';
 import AdminPanel from './components/admin/AdminPanel';
 
-type Screen = 'home' | 'setup' | 'survey' | 'report' | 'intro' | 'admin';
+type Screen = 'home' | 'setup' | 'survey' | 'report' | 'intro' | 'supervisor' | 'hr' | 'admin';
 
 const PERSONA: PersonaData = {
   name: DEMO_PERSONA.name,
@@ -63,6 +65,21 @@ export default function App() {
     );
   }
 
+  if (screen === 'supervisor' && fitness) {
+    return (
+      <SupervisorReport
+        fitness={fitness}
+        persona={PERSONA}
+        model={model}
+        onBack={() => { window.scrollTo(0, 0); setScreen('report'); }}
+      />
+    );
+  }
+
+  if (screen === 'hr') {
+    return <HRReport model={model} onBack={() => { window.scrollTo(0, 0); setScreen('report'); }} />;
+  }
+
   if (screen === 'report' && result && fitness) {
     return (
       <ReportView
@@ -71,6 +88,8 @@ export default function App() {
         model={model}
         surveyDate={DEMO_PERSONA.surveyDate}
         onReset={() => { window.scrollTo(0, 0); setScreen('intro'); }}
+        onSupervisor={() => { window.scrollTo(0, 0); setScreen('supervisor'); }}
+        onHR={() => { window.scrollTo(0, 0); setScreen('hr'); }}
       />
     );
   }

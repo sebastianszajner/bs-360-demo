@@ -27,6 +27,8 @@ interface Props {
   model: ModelConfig;
   surveyDate: string;
   onReset: () => void;
+  onSupervisor: () => void;
+  onHR: () => void;
 }
 
 const ROLE_ORDER: RoleKey[] = ['sam', 'prz', 'wsp', 'pod'];
@@ -192,7 +194,7 @@ function CompetencySection({ comp, fit, idx, zones }: { comp: CompetencyScore; f
 
 /* ---------- główny widok ---------- */
 
-export default function ReportView({ result, fitness, model, surveyDate, onReset }: Props) {
+export default function ReportView({ result, fitness, model, surveyDate, onReset, onSupervisor, onHR }: Props) {
   const { competencies, persona } = result;
   const fitById = Object.fromEntries(fitness.competencies.map((f) => [f.id, f]));
   const byOthers = [...competencies].sort((a, b) => b.avgOthers - a.avgOthers);
@@ -208,10 +210,17 @@ export default function ReportView({ result, fitness, model, surveyDate, onReset
       <div className="no-print sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-5 py-3 flex items-center justify-between">
           <button onClick={onReset} className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1">← Mapa raportu</button>
-          <div className="text-xs text-gray-400 hidden sm:block">Raport rozwojowy 360° · SUUS Logistics</div>
-          <button onClick={() => window.print()} className="text-sm font-semibold text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90" style={{ background: BRAND.primary }}>
-            Pobierz PDF
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={onSupervisor} className="text-sm font-medium px-3 py-2 rounded-lg border hover:bg-gray-50 hidden md:block" style={{ borderColor: BRAND.secondary + '55', color: BRAND.secondary }}>
+              Dla przełożonego
+            </button>
+            <button onClick={onHR} className="text-sm font-medium px-3 py-2 rounded-lg border hover:bg-gray-50 hidden md:block" style={{ borderColor: BRAND.primary + '55', color: BRAND.primary }}>
+              Raport zbiorczy HR
+            </button>
+            <button onClick={() => window.print()} className="text-sm font-semibold text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90" style={{ background: BRAND.primary }}>
+              Pobierz PDF
+            </button>
+          </div>
         </div>
       </div>
 
