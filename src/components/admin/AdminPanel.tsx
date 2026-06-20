@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { ModelConfig, CompetencyConfig, BehaviorConfig, BehaviorType, ZoneConfig, BehaviorInterp } from '../../data/modelConfig';
-import { DEFAULT_MODEL } from '../../data/modelConfig';
+import { DEFAULT_MODEL, newCompetency, newBehavior, nextBehaviorNum } from '../../data/modelConfig';
 import { exportModelJSON, importModelJSON, lastSavedAt } from '../../data/configStore';
 import { backupSupported, pickBackupFolder, storedFolderName, forgetBackupFolder, writeBackup, downloadBackup } from '../../data/backup';
 import { BRAND } from '../../data/model';
@@ -81,6 +81,18 @@ export default function AdminPanel({ model, onSave, onBack }: Props) {
     patch((d) => { const c = d.competencies.find((x) => x.id === cId); if (c) Object.assign(c, p); });
   const updateZone = (i: number, p: Partial<ZoneConfig>) =>
     patch((d) => { Object.assign(d.scale.zones[i], p); });
+  // dodawanie / usuwanie elementów modelu
+  function addCompetency() {
+    const c = newCompetency(draft.competencies);
+    patch((d) => { d.competencies.push(c); });
+    setOpenComp(c.id);
+  }
+  const removeCompetency = (cId: string) =>
+    patch((d) => { if (d.competencies.length > 1) d.competencies = d.competencies.filter((c) => c.id !== cId); });
+  const addBehavior = (cId: string) =>
+    patch((d) => { const c = d.competencies.find((x) => x.id === cId); if (c) c.behaviors.push(newBehavior(cId, nextBehaviorNum(c))); });
+  const removeBehavior = (cId: string, bId: string) =>
+    patch((d) => { const c = d.competencies.find((x) => x.id === cId); if (c && c.behaviors.length > 1) c.behaviors = c.behaviors.filter((b) => b.id !== bId); });
 
   function doSave() { commit(draft); }
   async function connectFolder() {
@@ -284,13 +296,29 @@ export default function AdminPanel({ model, onSave, onBack }: Props) {
                     <div className="space-y-3">
                       {comp.behaviors.map((beh) => (
                         <BehaviorEditor key={beh.id} beh={beh} scaleMin={draft.scale.min} scaleMax={draft.scale.max} accent={comp.color} zones={draft.scale.zones}
+                          canRemove={comp.behaviors.length > 1} onRemove={() => removeBehavior(comp.id, beh.id)}
                           onChange={(p) => updateBehavior(comp.id, beh.id, p)} onInterp={(k, v) => updateInterp(comp.id, beh.id, k, v)} />
                       ))}
+                    </div>
+                    <div className="flex items-center justify-between pt-1">
+                      <button onClick={() => addBehavior(comp.id)} className="text-sm font-semibold px-3 py-2 rounded-lg border border-dashed border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700">
+                        + Dodaj zachowanie
+                      </button>
+                      {draft.competencies.length > 1 && (
+                        <button onClick={() => { if (confirm(`Usunąć kompetencję „${comp.name}"?`)) removeCompetency(comp.id); }} className="text-xs text-red-400 hover:text-red-600">
+                          Usuń kompetencję
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
               </div>
             ))}
+
+            {/* dodaj kompetencję */}
+            <button onClick={addCompetency} className="w-full py-4 rounded-xl border-2 border-dashed border-gray-300 text-gray-500 font-semibold hover:border-purple-300 hover:text-purple-600 transition">
+              + Dodaj kompetencję
+            </button>
           </div>
         )}
       </div>
@@ -298,8 +326,59 @@ export default function AdminPanel({ model, onSave, onBack }: Props) {
   );
 }
 
-function BehaviorEditor({ beh, scaleMin, scaleMax, accent, zones, onChange, onInterp }: {
+// Podgląd wektora kompetencji — pokazuje, jak ustawienie targetu i pasma dzieli
+// skalę na pięć stref. Wizualizacja stanu obecnego kalibracji.
+function VectorPreview({ beh, scaleMin, scaleMax, zones }: { beh: BehaviorConfig; scaleMin: number; scaleMax: number; zones: ZoneConfig[] }) {
+  const span = scaleMax - scaleMin;
+  const pct = (v: number) => Math.max(0, Math.min(100, ((v - scaleMin) / span) * 100));
+  const T = beh.target, tol = beh.tolerance;
+  const mono = beh.type === 'monotonic';
+  // granice stref na skali
+  const bounds = mono
+    ? [scaleMin, T - 2.2 * tol, T - tol, scaleMax, scaleMax]
+    : [scaleMin, T - 2.2 * tol, T - tol, T + tol, T + 2.2 * tol];
+  const segs = [
+    { from: scaleMin, to: bounds[1], z: zones[0] },
+    { from: bounds[1], to: bounds[2], z: zones[1] },
+    { from: bounds[2], to: mono ? scaleMax : bounds[3], z: zones[2] },
+    ...(mono ? [] : [
+      { from: bounds[3], to: bounds[4], z: zones[3] },
+      { from: bounds[4], to: scaleMax, z: zones[4] },
+    ]),
+  ];
+  const ticks = mono ? [scaleMin, +(T - tol).toFixed(1), scaleMax] : [scaleMin, +(T - tol).toFixed(1), T, +(T + tol).toFixed(1), scaleMax];
+
+  return (
+    <div className="mb-5">
+      <div className="text-[11px] text-gray-400 uppercase tracking-wide font-semibold mb-2">Podgląd wektora kompetencji</div>
+      <div className="relative h-7 rounded-lg overflow-hidden flex">
+        {segs.map((s, i) => {
+          const w = pct(s.to) - pct(s.from);
+          if (w <= 0) return null;
+          return <div key={i} className="h-full flex items-center justify-center" style={{ width: `${w}%`, background: s.z.color }}>
+            {w > 12 && <span className="text-[9px] font-bold text-white/90 px-1 text-center leading-none truncate">{s.z.short}</span>}
+          </div>;
+        })}
+        {/* marker optimum */}
+        <div className="absolute top-0 bottom-0 w-0.5 bg-white shadow" style={{ left: `${pct(T)}%` }} />
+        <div className="absolute -top-0.5 w-3 h-3 rounded-full bg-white border-2 shadow -translate-x-1/2" style={{ left: `${pct(T)}%`, borderColor: zones[2].color }} />
+      </div>
+      {/* skala */}
+      <div className="relative h-4 mt-1">
+        {ticks.map((t, i) => (
+          <span key={i} className="absolute text-[9px] text-gray-400 -translate-x-1/2 tabular-nums" style={{ left: `${pct(t)}%` }}>{t}</span>
+        ))}
+      </div>
+      <div className="text-[11px] text-gray-400 mt-1">
+        Optimum <b style={{ color: zones[2].color }}>{T.toFixed(1)}</b>, pasmo OK od <b>{(T - tol).toFixed(1)}</b> do <b>{mono ? scaleMax.toFixed(1) : (T + tol).toFixed(1)}</b>{mono && ' (więcej = lepiej)'}.
+      </div>
+    </div>
+  );
+}
+
+function BehaviorEditor({ beh, scaleMin, scaleMax, accent, zones, canRemove, onRemove, onChange, onInterp }: {
   beh: BehaviorConfig; scaleMin: number; scaleMax: number; accent: string; zones: ZoneConfig[];
+  canRemove: boolean; onRemove: () => void;
   onChange: (p: Partial<BehaviorConfig>) => void; onInterp: (k: keyof BehaviorInterp, v: string) => void;
 }) {
   const monotonic = beh.type === 'monotonic';
@@ -314,8 +393,13 @@ function BehaviorEditor({ beh, scaleMin, scaleMax, accent, zones, onChange, onIn
 
   return (
     <div className="border border-gray-200 rounded-xl p-4 bg-gray-50/60">
-      <input value={beh.text} onChange={(e) => onChange({ text: e.target.value })}
-        className="w-full font-medium text-sm border-b border-transparent hover:border-gray-200 focus:border-gray-300 bg-transparent pb-1 mb-4" />
+      <div className="flex items-center gap-2 mb-4">
+        <input value={beh.text} onChange={(e) => onChange({ text: e.target.value })}
+          className="flex-1 font-medium text-sm border-b border-transparent hover:border-gray-200 focus:border-gray-300 bg-transparent pb-1" />
+        {canRemove && (
+          <button onClick={() => { if (confirm('Usunąć to zachowanie?')) onRemove(); }} className="text-gray-300 hover:text-red-500 text-lg leading-none shrink-0 px-1" title="Usuń zachowanie">×</button>
+        )}
+      </div>
 
       <div className="grid md:grid-cols-3 gap-5 mb-5">
         <div>
@@ -328,6 +412,9 @@ function BehaviorEditor({ beh, scaleMin, scaleMax, accent, zones, onChange, onIn
         <CalibControl label="Poziom optymalny" value={beh.target} min={scaleMin} max={scaleMax} step={0.1} accent={accent} onChange={(v) => onChange({ target: v })} />
         <CalibControl label="Pasmo ± OK" value={beh.tolerance} min={0.1} max={2.5} step={0.1} accent={accent} onChange={(v) => onChange({ tolerance: v })} />
       </div>
+
+      {/* PODGLĄD WEKTORA — jak target i pasmo dzielą skalę na strefy */}
+      <VectorPreview beh={beh} scaleMin={scaleMin} scaleMax={scaleMax} zones={zones} />
 
       {/* OPISY PER STREFA — pięć pól, każde z nazwą strefy */}
       <div className="text-[11px] text-gray-400 uppercase tracking-wide font-semibold mb-2">Opis dla każdej strefy</div>

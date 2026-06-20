@@ -63,6 +63,42 @@ export interface BehaviorConfig {
   interp: BehaviorInterp;
 }
 
+// Kolory rotowane dla nowych kompetencji.
+const NEW_COLORS = ['#7a00df', '#0693e3', '#00d084', '#ff6900', '#003f8a', '#c8442a', '#5b6af0'];
+
+// Tworzy puste zachowanie z neutralnymi domyślnymi.
+export function newBehavior(compId: string, n: number): BehaviorConfig {
+  return {
+    id: `${compId}B${n}`,
+    text: 'Nowe zachowanie — wpisz treść',
+    type: 'optimal',
+    target: 4.5,
+    tolerance: 0.6,
+    interp: { low: '', ok: '', high: '' },
+  };
+}
+
+// Tworzy pustą kompetencję z jednym zachowaniem.
+export function newCompetency(existing: CompetencyConfig[]): CompetencyConfig {
+  const nums = existing.map((c) => parseInt(c.id.replace(/\D/g, ''), 10)).filter((n) => !isNaN(n));
+  const next = (nums.length ? Math.max(...nums) : 0) + 1;
+  const id = `K${next}`;
+  return {
+    id,
+    name: 'Nowa kompetencja',
+    nameShort: 'Nowa',
+    color: NEW_COLORS[(next - 1) % NEW_COLORS.length],
+    definition: '',
+    behaviors: [newBehavior(id, 1)],
+  };
+}
+
+// Następny numer zachowania w kompetencji (unikalny).
+export function nextBehaviorNum(comp: CompetencyConfig): number {
+  const nums = comp.behaviors.map((b) => parseInt(b.id.replace(/^.*B/, ''), 10)).filter((n) => !isNaN(n));
+  return (nums.length ? Math.max(...nums) : 0) + 1;
+}
+
 // Wybór opisu dokładnie wg strefy, z dziedziczeniem far_* → low/high.
 export function interpForState(interp: BehaviorInterp, state: FitnessState): string {
   switch (state) {
