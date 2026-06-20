@@ -20,6 +20,8 @@ import {
 import {
   StateBadge, BehaviorFitnessRow, GaussCurve, FitnessMatrix, FitnessRing,
 } from './FitnessVisuals';
+import Hint from '../ui/Hint';
+import { PLAN_TEMPLATE, KALENDARZ_90 } from '../../data/reportExtras';
 
 interface Props {
   result: ScoringResult;
@@ -64,10 +66,10 @@ function Para({ children }: { children: React.ReactNode }) {
 }
 
 function gapMeta(gap: number) {
-  if (gap > 0.7) return { color: BRAND.orange, label: 'Duża luka — priorytet' };
+  if (gap > 0.7) return { color: BRAND.orange, label: 'Duża luka · priorytet' };
   if (gap > 0.4) return { color: '#e0920a', label: 'Umiarkowana luka' };
   if (gap < -0.2) return { color: BRAND.suusGreen, label: 'Pozytywny wpływ' };
-  return { color: '#9ca3af', label: 'Mała luka — dobry wgląd' };
+  return { color: '#9ca3af', label: 'Mała luka · dobry wgląd' };
 }
 
 function GapBadge({ gap }: { gap: number }) {
@@ -119,7 +121,7 @@ function CompetencySection({ comp, fit, idx, zones }: { comp: CompetencyScore; f
         </div>
       </div>
 
-      <H2>Trafność zachowań — punkty przegięcia</H2>
+      <H2>Trafność zachowań · punkty przegięcia <Hint text="Cel to optimum, nie maksimum. Marker po lewej znaczy za mało, po prawej za dużo. Romb to samoocena, kropka to średnia otoczenia." color={comp.color} /></H2>
       <p className="text-sm text-gray-500 mb-3">
         Każde zachowanie ma poziom optymalny. Suwak pokazuje, czy otoczenie widzi je jako za mało, w sam raz, czy za dużo.
         Romb to samoocena, kropka to średnia otoczenia.
@@ -137,7 +139,7 @@ function CompetencySection({ comp, fit, idx, zones }: { comp: CompetencyScore; f
         </div>
       </div>
 
-      <H2>Szczegółowe natężenie — średnia z otoczenia</H2>
+      <H2>Szczegółowe natężenie · średnia z otoczenia</H2>
       <BehaviorBars comp={comp} />
 
       <H2>Rozkład odpowiedzi respondentów</H2>
@@ -183,7 +185,7 @@ function CompetencySection({ comp, fit, idx, zones }: { comp: CompetencyScore; f
         </div>
       </div>
 
-      <H2>Głosy zespołu — co mówią respondenci</H2>
+      <H2>Głosy zespołu · co mówią respondenci</H2>
       <blockquote className="border-l-4 pl-4 py-2 italic text-gray-700" style={{ borderColor: comp.color }}>
         „{voice.text}”
         <footer className="text-sm text-gray-400 not-italic mt-1">— {voice.author}</footer>
@@ -332,7 +334,7 @@ export default function ReportView({ result, fitness, model, surveyDate, onReset
               </div>
             ))}
           </div>
-          <H2>Okno Johariego — Twoja mapa świadomości</H2>
+          <H2>Okno Johariego · Twoja mapa świadomości</H2>
           <p className="text-sm text-gray-500 mb-3">Cztery ćwiartki świadomości kompetencji w zależności od tego, co Ty wiesz o sobie i co wiedzą inni (Luft i Ingham, 1955).</p>
           <JohariWindow competencies={competencies} />
         </Section>
@@ -415,7 +417,7 @@ export default function ReportView({ result, fitness, model, surveyDate, onReset
           <H1>Analityka pogłębiona</H1>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <H2>Pełny profil — pajęczyna kompetencji</H2>
+              <H2>Pełny profil · pajęczyna kompetencji</H2>
               <RadarChartComponent competencies={competencies} />
             </div>
             <div>
@@ -426,10 +428,10 @@ export default function ReportView({ result, fitness, model, surveyDate, onReset
           <H2>Mapa cieplna: kompetencje × grupy oceniające</H2>
           <p className="text-sm text-gray-500 mb-3">Im ciemniejsza komórka, tym wyższa ocena. Pokazuje, gdzie zespół jest jednomyślny.</p>
           <Heatmap competencies={competencies} />
-          <H2>Luki percepcji — samoocena na tle ocen otoczenia</H2>
+          <H2>Luki percepcji · samoocena na tle ocen otoczenia <Hint text="Luka to różnica między tym, jak menedżer ocenia siebie, a jak widzi go otoczenie. Dodatnia znaczy, że widzi siebie wyżej niż zespół." /></H2>
           <GapLines competencies={competencies} />
           <div className="mt-5 rounded-xl p-5 border-l-4" style={{ borderColor: BRAND.suusNavy, background: '#f4f8fc' }}>
-            <div className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: BRAND.suusNavy }}>Co ten wykres pokazuje — wnioski z badania</div>
+            <div className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: BRAND.suusNavy }}>Co ten wykres pokazuje · wnioski z badania</div>
             {ANALITYKA_LUKI.map((p, i) => <p key={i} className="text-[14px] leading-relaxed text-gray-700 mb-2 last:mb-0">{p}</p>)}
           </div>
           <div className="mt-4 rounded-xl p-5" style={{ background: BRAND.orange + '0e' }}>
@@ -440,10 +442,10 @@ export default function ReportView({ result, fitness, model, surveyDate, onReset
           <TopBottomBehaviors competencies={competencies} />
         </Section>
 
-        {/* 7b · PUNKTY PRZEGIĘCIA — MATRYCA TRAFNOŚCI */}
+        {/* 7b · PUNKTY PRZEGIĘCIA · MATRYCA TRAFNOŚCI */}
         <Section>
           <Eyebrow color={BRAND.green}>To, co wyróżnia ten raport</Eyebrow>
-          <H1>Punkty przegięcia — matryca trafności</H1>
+          <H1>Punkty przegięcia · matryca trafności</H1>
           <Para>
             To nie jest skala, w której więcej zawsze znaczy lepiej. Każde zachowanie ma poziom optymalny.
             Można go robić za mało (trzeba wzmocnić), w sam raz (utrzymać), albo za dużo (warto odpuścić).
@@ -460,7 +462,7 @@ export default function ReportView({ result, fitness, model, surveyDate, onReset
             </div>
             <div className="rounded-xl p-4" style={{ background: '#ffcc80' }}>
               <div className="text-sm font-bold" style={{ color: '#b5560a' }}>Za dużo</div>
-              <div className="text-[13px] text-gray-700 mt-1">Zachowanie przegięte — w nadmiarze szkodzi. Kierunek: odpuścić, wyważyć.</div>
+              <div className="text-[13px] text-gray-700 mt-1">Zachowanie w nadmiarze. Tu szkodzi, więc kierunek to odpuścić i wyważyć.</div>
             </div>
           </div>
 
@@ -527,7 +529,7 @@ export default function ReportView({ result, fitness, model, surveyDate, onReset
           <H2>Synteza profilu kompetencyjnego</H2>
           {GLOBAL_ANALYSIS.synteza.map((p, i) => <Para key={i}>{p}</Para>)}
 
-          <H2>Rekomendacje końcowe — kierunki dalszej pracy</H2>
+          <H2>Rekomendacje końcowe · kierunki dalszej pracy</H2>
           <div className="space-y-3">
             {GLOBAL_ANALYSIS.kierunki_koncowe.map(([t, d]) => (
               <div key={t}>
@@ -609,6 +611,51 @@ export default function ReportView({ result, fitness, model, surveyDate, onReset
                 <ul className="space-y-1.5">
                   {s.kroki.map((k, i) => <li key={i} className="text-[13px] text-gray-600 flex gap-1.5"><span style={{ color: BRAND.primary }}>•</span><span>{k}</span></li>)}
                 </ul>
+              </div>
+            ))}
+          </div>
+
+          {/* plan do wypełnienia */}
+          <H2>Twój plan rozwoju · do wypełnienia</H2>
+          <p className="text-sm text-gray-500 mb-3">{PLAN_TEMPLATE.intro}</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr>
+                  {PLAN_TEMPLATE.columns.map((c, i) => (
+                    <th key={i} className="text-left text-xs font-bold uppercase tracking-wide text-gray-500 border-b-2 pb-2 pr-3" style={{ borderColor: BRAND.suusNavy }}>{c}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: PLAN_TEMPLATE.rows }).map((_, r) => (
+                  <tr key={r}>
+                    {PLAN_TEMPLATE.columns.map((_, c) => (
+                      <td key={c} className="border-b border-gray-200 h-12 pr-3">
+                        {c === 0 && <span className="text-gray-300 font-bold">{r + 1}</span>}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* kalendarz 90 dni */}
+          <H2>Kalendarz 90 dni · do wycięcia</H2>
+          <p className="text-sm text-gray-500 mb-3">{KALENDARZ_90.intro}</p>
+          <div className="grid md:grid-cols-2 gap-4">
+            {KALENDARZ_90.phases.map((ph, pi) => (
+              <div key={pi} className="rounded-xl border border-gray-100 p-4">
+                <div className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: [BRAND.suusGreen, BRAND.secondary, BRAND.orange, BRAND.primary][pi] }}>{ph.name}</div>
+                <div className="space-y-2">
+                  {ph.weeks.map(([w, a], wi) => (
+                    <div key={wi} className="flex gap-3 items-start">
+                      <span className="text-[11px] font-mono font-bold text-gray-400 w-16 shrink-0 pt-0.5">{w}</span>
+                      <span className="text-[13px] text-gray-700">{a}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>

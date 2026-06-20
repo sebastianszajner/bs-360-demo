@@ -1,6 +1,6 @@
 // Wizualizacje modelu trafności (punkty przegięcia).
 // Suwak 5-stopniowy, krzywa Gaussa z pasmem optimum, matryca trafności, badge stanu.
-// Etykiety i kolory stref pochodzą z modelu (edytowalne) — fallback DEFAULT_ZONE_MAP.
+// Etykiety i kolory stref pochodzą z modelu (edytowalne) · fallback DEFAULT_ZONE_MAP.
 import { BRAND } from '../../data/model';
 import { DEFAULT_ZONE_MAP, type BehaviorFitness, type CompetencyFitness, type ZoneMap } from '../../engine/fitness';
 import type { FitnessState } from '../../data/modelConfig';
@@ -130,7 +130,7 @@ export function FitnessMatrix({ competencies, zones = DEFAULT_ZONE_MAP }: { comp
                     <div
                       className="rounded-md flex items-center justify-center text-[10px] font-bold text-white"
                       style={{ background: z.color, height: 34, minWidth: 52 }}
-                      title={`${b.text} — ${z.label} (${z.action})`}
+                      title={`${b.text} · ${z.label} (${z.action})`}
                     >
                       {b.avgIntensity.toFixed(1)}
                     </div>

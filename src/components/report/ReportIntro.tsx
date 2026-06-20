@@ -29,9 +29,9 @@ const BS = {
 };
 
 const PILLARS = [
-  { img: 'pillar-balance.jpg', glow: BS.primary, eyebrow: 'Model', title: 'Punkty przegięcia', body: 'Każde zachowanie ma poziom optymalny. Może być za mało, w sam raz, albo za dużo — i każdy stan to inny kierunek pracy.' },
+  { img: 'pillar-balance.jpg', glow: BS.primary, eyebrow: 'Model', title: 'Punkty przegięcia', body: 'Każde zachowanie ma poziom optymalny. Może go być za mało, w sam raz albo za dużo. Każdy stan prowadzi w inną stronę.' },
   { img: 'pillar-perspectives.jpg', glow: BS.secondary, eyebrow: '360 stopni', title: 'Cztery perspektywy', body: 'Te same zachowania ocenia samoocena, przełożony, współpracownicy i podwładni. Najwięcej mówią różnice między nimi.' },
-  { img: 'pillar-plan.jpg', glow: BS.green, eyebrow: 'Od diagnozy do działania', title: 'Interpretacja i plan', body: 'Każda kompetencja kończy się gotową interpretacją i kierunkiem rozwoju. Na końcu plan na 90 dni: trzy priorytety.' },
+  { img: 'pillar-plan.jpg', glow: BS.green, eyebrow: 'Od diagnozy do działania', title: 'Interpretacja i plan', body: 'Każda kompetencja kończy się gotową interpretacją i kierunkiem rozwoju. Na końcu czeka plan na 90 dni: trzy priorytety.' },
 ];
 
 const ROLE_GUIDE = [
@@ -41,12 +41,12 @@ const ROLE_GUIDE = [
 ];
 
 const REPORT_MAP = [
-  ['01', 'Briefing wykonawczy', 'Pięć wyników, trzy mocne strony, trzy obszary rozwoju — w dwie minuty.'],
-  ['02', 'Punkty przegięcia', 'Matryca trafności wszystkich zachowań i krzywe optimum per kompetencja.'],
+  ['01', 'Briefing wykonawczy', 'Pięć wyników, trzy mocne strony, trzy obszary rozwoju. Wszystko w dwie minuty.'],
+  ['02', 'Punkty przegięcia', 'Matryca trafności wszystkich zachowań i krzywe optimum dla każdej kompetencji.'],
   ['03', 'Wyniki w pigułce', 'Tabela czterech perspektyw z luką między samooceną a otoczeniem.'],
-  ['04', 'Analityka pogłębiona', 'Profil radarowy, mapa cieplna, luki percepcji, najmocniejsze i rozwojowe zachowania.'],
-  ['05', 'Analiza globalna', 'Synteza całego profilu — wzorzec działania, nie pięć osobnych wyników.'],
-  ['06', 'Pięć kompetencji', 'Każda z osobna: suwaki trafności, interpretacja, sześć kierunków rozwoju, głosy zespołu.'],
+  ['04', 'Analityka pogłębiona', 'Profil radarowy, mapa cieplna, luki percepcji oraz najmocniejsze i rozwojowe zachowania.'],
+  ['05', 'Analiza globalna', 'Synteza całego profilu jako jeden wzorzec działania.'],
+  ['06', 'Pięć kompetencji', 'Każda osobno: suwaki trafności, interpretacja, sześć kierunków rozwoju, głosy zespołu.'],
   ['07', 'Plan działań 90 dni', 'Trzy priorytety w trzech horyzontach czasowych i ścieżki wdrożenia.'],
 ] as const;
 
@@ -100,8 +100,8 @@ export default function ReportIntro({ persona, fitness, model, surveyDate, onEnt
             Zanim zaczniesz —<br /><span style={{ color: BS.primary, fontStyle: 'italic', fontWeight: 400 }}>mapa</span> tego raportu
           </h1>
           <p className="text-xl md:text-2xl leading-relaxed max-w-3xl text-white/75">
-            To nie zestaw wykresów. To <strong className="text-white">system kalibracji zachowań menedżerskich</strong> —
-            pokazuje nie tylko, jak wysoko jesteś oceniany, ale czy danego zachowania jest tyle, ile potrzebuje Twoja rola.
+            Ten raport mierzy więcej niż poziom oceny. To <strong className="text-white">system kalibracji zachowań menedżerskich</strong>.
+            Pokazuje, czy danego zachowania jest tyle, ile potrzebuje Twoja rola.
           </p>
           <div className="flex flex-wrap gap-x-10 gap-y-2 mt-10 font-mono text-xs tracking-wider uppercase text-white/45">
             <span>Dla: <span className="text-white/90">{persona.name}</span></span>
@@ -132,7 +132,7 @@ export default function ReportIntro({ persona, fitness, model, surveyDate, onEnt
               <div className="flex-1 flex items-center justify-center text-white" style={{ background: BS.orange }}>za dużo · odpuść</div>
             </div>
             <p className="text-[14px] mt-3 text-white/55">
-              „Udziela informacji zwrotnej": za mało znaczy, że jej brakuje; za dużo, że feedback męczy zespół i traci wagę. Cel to środek, nie maksimum.
+              Weźmy informację zwrotną. Za mało jej znaczy, że pracownik nie wie, na czym stoi. Za dużo, że feedback męczy i traci wagę. Celuj w środek.
             </p>
           </div>
         </div>
@@ -195,9 +195,9 @@ export default function ReportIntro({ persona, fitness, model, surveyDate, onEnt
         <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${BS.primary} 0%, ${BS.navy} 100%)` }} />
         <div className="absolute inset-0" style={{ background: `radial-gradient(700px 400px at 28% 50%, ${BS.secondary}55, transparent 60%)` }} />
         <div className="relative max-w-[1100px] mx-auto px-8 py-24 text-center">
-          <div className="font-mono text-[12px] tracking-[0.3em] uppercase mb-6 text-white/70">Masz mapę — czas wejść w teren</div>
+          <div className="font-mono text-[12px] tracking-[0.3em] uppercase mb-6 text-white/70">Masz mapę. Czas wejść w teren</div>
           <h2 className="font-display font-black leading-tight tracking-tight mb-8 text-white" style={{ fontSize: 'clamp(40px, 6vw, 76px)' }}>
-            Raport nie zmienia nic.<br /><span style={{ fontStyle: 'italic', fontWeight: 400 }}>Pierwszy ruch</span> — owszem.
+            Raport nie zmienia nic.<br />Zmienia go <span style={{ fontStyle: 'italic', fontWeight: 400 }}>pierwszy ruch</span>.
           </h2>
           <button onClick={onEnter} className="font-mono text-sm tracking-widest uppercase px-11 py-5 rounded-xl font-semibold transition hover:-translate-y-1 hover:scale-105" style={{ background: '#fff', color: BS.primary, boxShadow: '0 10px 40px rgba(0,0,0,0.3)' }}>
             Wejdź do raportu →

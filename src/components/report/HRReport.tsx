@@ -68,15 +68,15 @@ export default function HRReport({ model, onBack }: Props) {
             </div>
           </div>
           <p className="text-[15px] leading-relaxed text-gray-700 mt-4">
-            Ten raport pokazuje wzorzec całej grupy, nie pojedyncze osoby. Tam, gdzie ta sama kompetencja jest słaba u wielu
-            menedżerów, mówimy o luce systemowej — sygnale do działania zespołowego (szkolenie, standard), nie indywidualnego.
+            Ten raport pokazuje wzorzec całej grupy, nie pojedyncze osoby. Gdy ta sama kompetencja jest słaba u wielu menedżerów,
+            mamy lukę systemową. To sygnał do działania zespołowego: wspólny standard albo szkolenie, nie rozmowa z jedną osobą.
           </p>
         </Section>
 
         {/* MAPA CIEPLNA */}
         <Section>
           <H1>Mapa trafności — menedżerowie × kompetencje</H1>
-          <p className="text-gray-500 mb-4 text-[15px]">Każda komórka to dopasowanie menedżera do optimum w danej kompetencji. Czytaj kolumnami: pionowy pas czerwieni to luka systemowa.</p>
+          <p className="text-gray-500 mb-4 text-[15px]">Każda komórka pokazuje, jak menedżer trafia w optimum danej kompetencji. Czytaj kolumnami. Pionowy pas czerwieni to luka systemowa.</p>
           <div className="overflow-x-auto">
             <table className="w-full" style={{ borderSpacing: 4, borderCollapse: 'separate' }}>
               <thead>
@@ -148,7 +148,7 @@ export default function HRReport({ model, onBack }: Props) {
         {/* RANKING */}
         <Section>
           <H1>Trafność indywidualna w grupie</H1>
-          <p className="text-gray-500 mb-4 text-[15px]">Nie ranking „najlepszy menedżer", tylko dopasowanie profilu do poziomów optymalnych. Skrajne pozycje to dobre punkty startu do rozmów rozwojowych.</p>
+          <p className="text-gray-500 mb-4 text-[15px]">To nie ranking najlepszych. To dopasowanie profilu do poziomów optymalnych. Skrajne pozycje dają dobry punkt startu do rozmów rozwojowych.</p>
           <div className="space-y-2">
             {ranking.map((g, i) => (
               <div key={g.manager.id} className="flex items-center gap-3">
@@ -168,10 +168,10 @@ export default function HRReport({ model, onBack }: Props) {
           <div className="rounded-xl p-6 border-l-4" style={{ borderColor: BRAND.primary, background: '#f7f4fd' }}>
             <div className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: BRAND.primary }}>Kluczowy wniosek dla HR</div>
             <p className="text-[15px] leading-relaxed text-gray-700">
-              Najsłabszym ogniwem grupy jest <b>{weakest[0].comp.nameShort.toLowerCase()}</b> — średnio {weakest[0].avgFit}% dopasowania,
-              {' '}poza pasmem u {weakest[0].offCount} z {group.length} menedżerów. To nie problem pojedynczych osób, tylko grupy, więc
-              {' '}najwyższy zwrot da działanie wspólne: jeden standard i jedno krótkie szkolenie zamiast pięciu osobnych rozmów.
-              {' '}Najmocniejszy obszar, <b>{strongest.comp.nameShort.toLowerCase()}</b>, użyj jako wewnętrznego wzorca dobrych praktyk.
+              Najsłabsze ogniwo grupy to <b>{weakest[0].comp.nameShort.toLowerCase()}</b>. Średnio {weakest[0].avgFit}% dopasowania,
+              {' '}poza pasmem u {weakest[0].offCount} z {group.length} menedżerów. To problem grupy, nie pojedynczych osób.
+              {' '}Najwyższy zwrot da działanie wspólne: jeden standard i jedno krótkie szkolenie zamiast pięciu osobnych rozmów.
+              {' '}Najmocniejszy obszar to <b>{strongest.comp.nameShort.toLowerCase()}</b>. Użyj go jako wzorca dobrych praktyk dla reszty.
             </p>
           </div>
         </Section>

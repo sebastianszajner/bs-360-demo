@@ -38,9 +38,9 @@ export interface ZoneConfig {
 
 export const DEFAULT_ZONES: ZoneConfig[] = [
   { key: 'far_low', label: 'Zdecydowanie poniżej normy', short: 'wyraźny niedobór', action: 'wzmocnij', color: '#9ccc65' },
-  { key: 'low', label: 'Za mało, ale w skali', short: 'lekki niedobór', action: 'wzmocnij', color: '#c5e1a5' },
+  { key: 'low', label: 'Trochę za mało', short: 'lekki niedobór', action: 'wzmocnij', color: '#c5e1a5' },
   { key: 'ok', label: 'W sam raz', short: 'optimum', action: 'utrzymaj', color: '#00d084' },
-  { key: 'high', label: 'Za dużo, ale w skali', short: 'lekki nadmiar', action: 'odpuść', color: '#ffab40' },
+  { key: 'high', label: 'Trochę za dużo', short: 'lekki nadmiar', action: 'odpuść', color: '#ffab40' },
   { key: 'far_high', label: 'Zdecydowanie powyżej normy', short: 'wyraźny nadmiar', action: 'odpuść', color: '#ff5252' },
 ];
 
@@ -166,37 +166,37 @@ export const DEFAULT_MODEL: ModelConfig = {
       nameShort: 'Kierowanie zespołem',
       color: '#003f8a',
       definition:
-        'Codzienne zarządzanie pracą zespołu: planowanie zmian, ustalanie priorytetów, kontrola wykonania, dbanie o bezpieczeństwo i jakość operacji magazynowych.',
+        'Codzienne zarządzanie pracą zespołu. Planuje zmiany, ustala priorytety i sprawdza wykonanie. Dba o bezpieczeństwo i jakość pracy w magazynie.',
       behaviors: [
         {
-          id: 'K1B1', text: 'Komunikuje cele dnia / tygodnia każdej zmianie', type: 'optimal', target: 5.0, tolerance: 0.6,
+          id: 'K1B1', text: 'Komunikuje cele dnia i tygodnia każdej zmianie', type: 'optimal', target: 5.0, tolerance: 0.6,
           interp: {
-            low: 'Zespół nie zawsze wie, co jest priorytetem dnia. Warto wprowadzić stały, krótki rytm komunikowania celów.',
-            ok: 'Cele są komunikowane jasno i w sam raz. Zespół wie, na czym się skupić, bez poczucia przeciążenia instrukcjami.',
-            high: 'Komunikat celów bywa zbyt drobiazgowy. Nadmiar instrukcji odbiera liderom zmianowym przestrzeń decyzyjną.',
+            low: 'Zespół nie zawsze wie, co jest priorytetem dnia. Wprowadź krótki, stały rytm komunikowania celów.',
+            ok: 'Cele są jasne i podane w sam raz. Zespół wie, na czym się skupić, i nie czuje się zasypany instrukcjami.',
+            high: 'Cele bywają podawane zbyt drobiazgowo. Nadmiar instrukcji odbiera liderom zmianowym przestrzeń na własne decyzje.',
           },
         },
         {
-          id: 'K1B2', text: 'Adekwatnie rozkłada zadania w zespole', type: 'optimal', target: 5.0, tolerance: 0.6,
+          id: 'K1B2', text: 'Trafnie rozkłada zadania w zespole', type: 'optimal', target: 5.0, tolerance: 0.6,
           interp: {
-            low: 'Obciążenie bywa nierówne. Warto świadomie przeglądać, kto czym jest obłożony przed startem zmiany.',
-            ok: 'Zadania rozłożone trafnie do możliwości zespołu. Dobra równowaga obciążeń.',
-            high: 'Rozkład zadań bywa nadmiernie sterowany przez kierownika. Zespół traci poczucie sprawczości w organizacji własnej pracy.',
+            low: 'Obciążenie bywa nierówne. Przed startem zmiany sprawdzaj, kto czym jest obłożony.',
+            ok: 'Zadania pasują do możliwości zespołu. Obciążenia są dobrze wyważone.',
+            high: 'Kierownik za mocno steruje podziałem zadań. Zespół traci poczucie wpływu na własną pracę.',
           },
         },
         {
-          id: 'K1B3', text: 'Reaguje na odchylenia od planu w czasie rzeczywistym', type: 'optimal', target: 4.5, tolerance: 0.6,
+          id: 'K1B3', text: 'Reaguje na odchylenia od planu na bieżąco', type: 'optimal', target: 4.5, tolerance: 0.6,
           interp: {
-            low: 'Odchylenia bywają wyłapywane za późno. Warto wzmocnić wczesne sygnały (krótkie check-iny w trakcie zmiany).',
-            ok: 'Reakcja na odchylenia jest szybka i proporcjonalna do skali problemu.',
-            high: 'Kierownik reaguje na każde drobne odchylenie osobiście. To utrwala gaszenie pożarów i zależność zespołu od jednej osoby.',
+            low: 'Odchylenia wychodzą na jaw za późno. Wzmocnij wczesne sygnały, na przykład krótkie check-iny w trakcie zmiany.',
+            ok: 'Reakcja na odchylenia jest szybka i pasuje do skali problemu.',
+            high: 'Kierownik sam reaguje na każde drobne odchylenie. To utrwala gaszenie pożarów i uzależnia zespół od jednej osoby.',
           },
         },
         {
           id: 'K1B4', text: 'Dba o bezpieczeństwo i przestrzeganie procedur BHP', type: 'monotonic', target: 6.0, tolerance: 0.6,
           interp: {
-            low: 'Przestrzeganie procedur bywa nierówne. To obszar bez kompromisów — warto wzmocnić konsekwencję.',
-            ok: 'Bezpieczeństwo i BHP są traktowane priorytetowo i konsekwentnie. Fundament stabilności operacji.',
+            low: 'Przestrzeganie procedur bywa nierówne. Tu nie ma miejsca na kompromis. Wzmocnij konsekwencję.',
+            ok: 'Bezpieczeństwo i BHP są na pierwszym miejscu i pilnowane konsekwentnie. To fundament stabilnej pracy.',
             high: '',
           },
         },
@@ -208,40 +208,40 @@ export const DEFAULT_MODEL: ModelConfig = {
       nameShort: 'Komunikacja i feedback',
       color: '#ff6900',
       definition:
-        'Udzielanie pracownikom regularnej, konkretnej informacji zwrotnej. Umiejętność prowadzenia trudnych rozmów, słuchania, zadawania pytań oraz zauważania mocnych stron i obszarów do poprawy.',
+        'Daje pracownikom regularną i konkretną informację zwrotną. Prowadzi trudne rozmowy, słucha i zadaje pytania. Widzi mocne strony i to, co wymaga poprawy.',
       behaviors: [
         {
-          id: 'K2B1', text: 'Udziela regularnej informacji zwrotnej członkom zespołu', type: 'optimal', target: 4.5, tolerance: 0.6,
+          id: 'K2B1', text: 'Daje regularną informację zwrotną członkom zespołu', type: 'optimal', target: 4.5, tolerance: 0.6,
           interp: {
-            far_low: 'Informacja zwrotna praktycznie nie istnieje. Zespół pracuje bez sygnału, czy robi dobrze, czy źle. To realne ryzyko spadku zaangażowania i rotacji.',
-            low: 'Informacja zwrotna pojawia się głównie jako reakcja na błąd. Brakuje rytmu feedbacku pozytywnego i rozwojowego.',
-            ok: 'Feedback jest regularny i proporcjonalny. Zespół wie, na czym stoi, bez poczucia ciągłej oceny.',
-            high: 'Feedback bywa zbyt częsty i drobiazgowy. Nadmiar uwag rozmywa to, co naprawdę ważne, i męczy zespół.',
-            far_high: 'Feedback jest tak intensywny, że zespół przestaje go słyszeć. Ciągłe uwagi do wszystkiego budują napięcie i wyuczoną bezradność.',
+            far_low: 'Informacji zwrotnej prawie nie ma. Zespół pracuje bez sygnału, czy robi dobrze, czy źle. To realne ryzyko spadku zaangażowania i odejść.',
+            low: 'Informacja zwrotna pojawia się głównie po błędzie. Brakuje pochwał i rozmów rozwojowych.',
+            ok: 'Feedback jest regularny i wyważony. Zespół wie, na czym stoi, i nie czuje się stale oceniany.',
+            high: 'Feedback bywa zbyt częsty i drobiazgowy. Nadmiar uwag zaciera to, co naprawdę ważne, i męczy zespół.',
+            far_high: 'Feedback jest tak intensywny, że zespół przestaje go słyszeć. Ciągłe uwagi do wszystkiego budują napięcie i bezradność.',
           },
         },
         {
           id: 'K2B2', text: 'Słucha pracowników, zanim podejmie decyzję', type: 'optimal', target: 5.0, tolerance: 0.6,
           interp: {
-            low: 'Decyzje bywają podejmowane bez wysłuchania zespołu. Warto świadomie zostawiać przestrzeń na głos pracownika.',
-            ok: 'Kierownik słucha i uwzględnia głos zespołu w sam raz — bez paraliżu decyzyjnego.',
-            high: 'Nadmiar konsultacji potrafi spowalniać decyzje i rozmywać odpowiedzialność za ostateczny wybór.',
+            low: 'Decyzje bywają podejmowane bez wysłuchania zespołu. Zostawiaj świadomie miejsce na głos pracownika.',
+            ok: 'Kierownik słucha i bierze pod uwagę głos zespołu w sam raz. Decyzje nie grzęzną.',
+            high: 'Za dużo konsultacji spowalnia decyzje i zaciera odpowiedzialność za ostateczny wybór.',
           },
         },
         {
-          id: 'K2B3', text: 'Potrafi prowadzić trudne rozmowy bez eskalacji', type: 'monotonic', target: 5.5, tolerance: 0.6,
+          id: 'K2B3', text: 'Prowadzi trudne rozmowy bez eskalacji', type: 'monotonic', target: 5.5, tolerance: 0.6,
           interp: {
-            low: 'Trudne rozmowy bywają odkładane lub eskalują. Warto wzmocnić strukturę rozmowy korygującej.',
-            ok: 'Trudne rozmowy prowadzone są spokojnie i bez utraty relacji. Mocna strona komunikacyjna.',
+            low: 'Trudne rozmowy bywają odkładane albo eskalują. Wzmocnij strukturę rozmowy korygującej.',
+            ok: 'Trudne rozmowy idą spokojnie i bez utraty relacji. To mocna strona w komunikacji.',
             high: '',
           },
         },
         {
-          id: 'K2B4', text: 'Docenia dobre wykonanie zadań w sposób zauważalny', type: 'optimal', target: 4.5, tolerance: 0.6,
+          id: 'K2B4', text: 'Docenia dobrą pracę w widoczny sposób', type: 'optimal', target: 4.5, tolerance: 0.6,
           interp: {
-            low: 'Dobre wykonanie bywa niezauważone. Warto wprowadzić nawyk konkretnej, codziennej pochwały.',
+            low: 'Dobra praca bywa niezauważona. Wprowadź nawyk konkretnej, codziennej pochwały.',
             ok: 'Docenianie jest konkretne i wiarygodne. Zespół czuje, że dobra praca jest widziana.',
-            high: 'Pochwały bywają tak częste, że tracą wartość. Docenianie wszystkiego oznacza docenianie niczego.',
+            high: 'Pochwały padają tak często, że tracą wartość. Kto chwali wszystko, nie chwali niczego.',
           },
         },
       ],
@@ -252,37 +252,37 @@ export const DEFAULT_MODEL: ModelConfig = {
       nameShort: 'Zarządzanie zmianą',
       color: '#7aa83e',
       definition:
-        'Wdrażanie nowych procesów, narzędzi i procedur. Szybka reakcja na zmiany zewnętrzne (klient, wolumeny, regulacje) oraz prowadzenie zespołu przez okresy niepewności.',
+        'Wdraża nowe procesy, narzędzia i procedury. Szybko reaguje na zmiany z zewnątrz, takie jak klient, wolumeny czy przepisy. Prowadzi zespół przez czas niepewności.',
       behaviors: [
         {
-          id: 'K3B1', text: 'Adaptuje się do nowych procedur i narzędzi', type: 'optimal', target: 4.5, tolerance: 0.6,
+          id: 'K3B1', text: 'Dostosowuje się do nowych procedur i narzędzi', type: 'optimal', target: 4.5, tolerance: 0.6,
           interp: {
-            low: 'Adaptacja bywa wolniejsza niż wymaga tego tempo zmian. Warto wcześniej testować nowe rozwiązania.',
-            ok: 'Tempo adaptacji jest dobre — szybkie, ale nie kosztem stabilności zespołu.',
-            high: 'Tempo wdrażania nowości bywa szybsze niż gotowość zespołu. Warto sprawdzać, czy ludzie nadążają.',
+            low: 'Tempo zmian wyprzedza tempo adaptacji. Testuj nowe rozwiązania wcześniej.',
+            ok: 'Tempo adaptacji jest dobre. Szybkie, a zespół zachowuje stabilność.',
+            high: 'Nowości wchodzą szybciej, niż zespół jest gotowy. Sprawdzaj, czy ludzie nadążają.',
           },
         },
         {
-          id: 'K3B2', text: 'Wdraża zmiany operacyjne bez utraty ciągłości pracy', type: 'monotonic', target: 5.5, tolerance: 0.6,
+          id: 'K3B2', text: 'Wdraża zmiany bez przerywania pracy zespołu', type: 'monotonic', target: 5.5, tolerance: 0.6,
           interp: {
-            low: 'Zmiany bywają wdrażane kosztem ciągłości pracy. Warto wzmocnić planowanie okresu przejściowego.',
-            ok: 'Zmiany wdrażane płynnie, bez utraty ciągłości operacji. Wyraźna mocna strona.',
+            low: 'Zmiany bywają wdrażane kosztem ciągłości pracy. Lepiej zaplanuj okres przejściowy.',
+            ok: 'Zmiany wchodzą płynnie, praca się nie zatrzymuje. To wyraźna mocna strona.',
             high: '',
           },
         },
         {
-          id: 'K3B3', text: 'Tłumaczy zespołowi sens zmiany, a nie tylko jej zakres', type: 'monotonic', target: 5.5, tolerance: 0.6,
+          id: 'K3B3', text: 'Tłumaczy zespołowi sens zmiany, nie tylko jej zakres', type: 'monotonic', target: 5.5, tolerance: 0.6,
           interp: {
-            low: 'Komunikat zmiany koncentruje się na "co" i "jak", pomijając "dlaczego". To osłabia trwałość wdrożeń.',
-            ok: 'Sens zmiany jest komunikowany jasno. Zespół rozumie kontekst, nie tylko zakres.',
+            low: 'Komunikat o zmianie mówi, co i jak, ale pomija dlaczego. Przez to zmiany nie utrwalają się na dłużej.',
+            ok: 'Sens zmiany jest jasny. Zespół rozumie kontekst, nie tylko zakres.',
             high: '',
           },
         },
         {
-          id: 'K3B4', text: 'Reaguje konstruktywnie na nieprzewidziane odchylenia', type: 'monotonic', target: 5.0, tolerance: 0.6,
+          id: 'K3B4', text: 'Reaguje spokojnie na nieprzewidziane sytuacje', type: 'monotonic', target: 5.0, tolerance: 0.6,
           interp: {
-            low: 'Nieprzewidziane sytuacje bywają źródłem napięcia. Warto wzmocnić spokojną, ustrukturyzowaną reakcję.',
-            ok: 'Reakcja na nieprzewidziane jest spokojna i konstruktywna. Stabilizuje zespół w niepewności.',
+            low: 'Nieprzewidziane sytuacje rodzą napięcie. Wzmocnij spokojną reakcję krok po kroku.',
+            ok: 'Reakcja na nieprzewidziane jest spokojna i pomocna. Stabilizuje zespół w niepewności.',
             high: '',
           },
         },
@@ -294,38 +294,38 @@ export const DEFAULT_MODEL: ModelConfig = {
       nameShort: 'Orientacja na klienta',
       color: '#0693e3',
       definition:
-        'Rozumienie potrzeb klienta wewnętrznego i zewnętrznego, budowanie relacji opartych na zaufaniu, proaktywne rozwiązywanie problemów. W kontekście wartości SUUS: PARTNERSTWO i ONE STEP AHEAD.',
+        'Rozumie potrzeby klienta wewnętrznego i zewnętrznego. Buduje relacje oparte na zaufaniu i sam rozwiązuje problemy. Wprost odwołuje się do wartości SUUS: partnerstwo i one step ahead.',
       behaviors: [
         {
-          id: 'K4B1', text: 'Rozumie potrzeby klienta zewnętrznego, nie tylko wskaźniki', type: 'monotonic', target: 5.5, tolerance: 0.6,
+          id: 'K4B1', text: 'Rozumie potrzeby klienta, nie tylko wskaźniki', type: 'monotonic', target: 5.5, tolerance: 0.6,
           interp: {
-            low: 'Perspektywa klienta bywa przesłonięta wskaźnikami operacyjnymi. Warto częściej pytać "co to znaczy dla klienta".',
-            ok: 'Potrzeby klienta są dobrze rozumiane i obecne w codziennych decyzjach.',
+            low: 'Wskaźniki operacyjne przesłaniają perspektywę klienta. Częściej pytaj, co dana liczba znaczy dla klienta.',
+            ok: 'Potrzeby klienta są dobrze rozumiane i widać je w codziennych decyzjach.',
             high: '',
           },
         },
         {
-          id: 'K4B2', text: 'Komunikuje się z innymi działami partnersko, nie transakcyjnie', type: 'optimal', target: 5.0, tolerance: 0.6,
+          id: 'K4B2', text: 'Rozmawia z innymi działami po partnersku', type: 'optimal', target: 5.0, tolerance: 0.6,
           interp: {
-            low: 'Współpraca międzydziałowa bywa odbierana jako transakcyjna. Warto budować relacje poza bieżącymi sprawami.',
+            low: 'Inne działy odbierają współpracę jako czysto transakcyjną. Buduj relacje także poza bieżącymi sprawami.',
             ok: 'Współpraca z innymi działami jest partnerska i oparta na zaufaniu.',
-            high: 'Czas na relacje międzydziałowe bywa kosztem własnego zespołu. Warto pilnować równowagi.',
+            high: 'Relacje międzydziałowe pochłaniają czas potrzebny własnemu zespołowi. Pilnuj równowagi.',
           },
         },
         {
-          id: 'K4B3', text: 'Proaktywnie sygnalizuje ryzyka, zanim staną się problemem', type: 'optimal', target: 4.5, tolerance: 0.6,
+          id: 'K4B3', text: 'Sygnalizuje ryzyka, zanim staną się problemem', type: 'optimal', target: 4.5, tolerance: 0.6,
           interp: {
-            low: 'Ryzyka bywają zgłaszane dopiero jako problem. Warto wzmocnić wczesne ostrzeganie.',
-            ok: 'Ryzyka są sygnalizowane w sam raz — wcześnie, ale bez nadmiernego alarmizmu.',
-            high: 'Zbyt częste sygnalizowanie ryzyk osłabia ich wagę. Partnerzy przestają reagować na "kolejny alarm".',
+            low: 'Ryzyka wychodzą dopiero jako gotowy problem. Wzmocnij wczesne ostrzeganie.',
+            ok: 'Ryzyka idą w sam raz. Wcześnie, ale bez siania paniki.',
+            high: 'Zbyt częste alarmy o ryzykach osłabiają ich wagę. Partnerzy przestają reagować na kolejny sygnał.',
           },
         },
         {
-          id: 'K4B4', text: 'Działa „one step ahead” — uprzedza potrzebę, nie reaguje', type: 'optimal', target: 4.5, tolerance: 0.6,
+          id: 'K4B4', text: 'Działa one step ahead, uprzedza potrzebę', type: 'optimal', target: 4.5, tolerance: 0.6,
           interp: {
-            low: 'Działanie bywa reaktywne. Warto budować nawyk wyprzedzania potrzeb klienta i działów.',
-            ok: 'Dobra równowaga między wyprzedzaniem potrzeb a realnym zapotrzebowaniem.',
-            high: 'Wyprzedzanie potrzeb bywa robione na zapas, na potrzeby, których nie ma. To rozprasza zasoby.',
+            low: 'Działanie bywa reaktywne. Buduj nawyk wyprzedzania potrzeb klienta i działów.',
+            ok: 'Dobra równowaga między wyprzedzaniem potrzeb a tym, co naprawdę potrzebne.',
+            high: 'Część działań idzie na zapas, pod potrzeby, których nie ma. To rozprasza zasoby.',
           },
         },
       ],
@@ -336,40 +336,40 @@ export const DEFAULT_MODEL: ModelConfig = {
       nameShort: 'Decyzyjność',
       color: '#7a00df',
       definition:
-        'Podejmowanie decyzji w warunkach niepewności i niepełnych danych. Branie odpowiedzialności za wynik własny i zespołu. Rozliczalność, transparentność, dotrzymywanie zobowiązań.',
+        'Podejmuje decyzje w niepewności i przy niepełnych danych. Bierze odpowiedzialność za wynik swój i zespołu. Działa rozliczalnie, otwarcie i dotrzymuje zobowiązań.',
       behaviors: [
         {
           id: 'K5B1', text: 'Podejmuje decyzje szybko, gdy sytuacja tego wymaga', type: 'optimal', target: 4.5, tolerance: 0.6,
           interp: {
-            far_low: 'Decyzje grzęzną. Zespół czeka, procesy się zatrzymują. Paraliż decyzyjny kosztuje tempo całej operacji.',
-            low: 'Decyzje bywają odkładane, co spowalnia zespół. Warto rozróżniać decyzje odwracalne (szybkie) od nieodwracalnych.',
-            ok: 'Tempo decyzji jest trafne — szybkie tam, gdzie trzeba, rozważne przy sprawach nieodwracalnych.',
-            high: 'Decyzje bywają zbyt pochopne. Szybkość kosztem konsultacji buduje dystans i ryzyko błędu.',
-            far_high: 'Decyzje zapadają błyskawicznie i bez konsultacji. Zespół przestaje rozumieć kierunek i traci poczucie wpływu na to, co się dzieje.',
+            far_low: 'Decyzje grzęzną. Zespół czeka, procesy stoją. Brak decyzji spowalnia całą operację.',
+            low: 'Decyzje bywają odkładane i spowalniają zespół. Oddziel decyzje odwracalne, które mogą być szybkie, od nieodwracalnych.',
+            ok: 'Tempo decyzji jest trafne. Szybkie tam, gdzie trzeba, ostrożne przy sprawach nieodwracalnych.',
+            high: 'Decyzje bywają zbyt pochopne. Pośpiech zamiast rozmowy buduje dystans i grozi błędem.',
+            far_high: 'Decyzje zapadają błyskawicznie i bez rozmowy. Zespół gubi kierunek i traci poczucie wpływu na to, co się dzieje.',
           },
         },
         {
           id: 'K5B2', text: 'Bierze odpowiedzialność za wynik zespołu, nie szuka winnych', type: 'monotonic', target: 5.5, tolerance: 0.6,
           interp: {
-            low: 'Odpowiedzialność bywa rozmywana. Warto wzmocnić branie wyniku na siebie, zwłaszcza w trudnych sytuacjach.',
-            ok: 'Kierownik bierze odpowiedzialność za wynik zespołu. Fundament zaufania i bezpieczeństwa.',
+            low: 'Odpowiedzialność bywa rozmywana. Bierz wynik na siebie, zwłaszcza w trudnych chwilach.',
+            ok: 'Kierownik bierze odpowiedzialność za wynik zespołu. To fundament zaufania i poczucia bezpieczeństwa.',
             high: '',
           },
         },
         {
-          id: 'K5B3', text: 'Komunikuje uzasadnienie decyzji zrozumiale dla zespołu', type: 'monotonic', target: 5.5, tolerance: 0.6,
+          id: 'K5B3', text: 'Wyjaśnia powód decyzji zrozumiale dla zespołu', type: 'monotonic', target: 5.5, tolerance: 0.6,
           interp: {
-            low: 'Zespół zna decyzje, ale nie zawsze rozumie ich powód („wiem co, ale nie wiem dlaczego”). Warto dodać „dlaczego”.',
-            ok: 'Uzasadnienie decyzji jest komunikowane jasno. Zespół rozumie kontekst i czuje się włączony.',
+            low: 'Zespół zna decyzje, ale nie zawsze wie, dlaczego zapadły. Dodawaj powód, nie tylko treść decyzji.',
+            ok: 'Powód decyzji jest jasny. Zespół rozumie kontekst i czuje się włączony.',
             high: '',
           },
         },
         {
-          id: 'K5B4', text: 'Wraca do decyzji i koryguje je, gdy okazują się błędne', type: 'optimal', target: 4.5, tolerance: 0.6,
+          id: 'K5B4', text: 'Wraca do decyzji i poprawia je, gdy okazują się błędne', type: 'optimal', target: 4.5, tolerance: 0.6,
           interp: {
-            low: 'Błędne decyzje bywają utrzymywane zbyt długo. Warto wprowadzić krótką retrospektywę decyzji.',
-            ok: 'Dobra równowaga: korygowanie błędów bez podważania własnej decyzyjności.',
-            high: 'Zbyt częste rewidowanie decyzji osłabia poczucie kierunku. Zespół przestaje ufać trwałości ustaleń.',
+            low: 'Błędne decyzje bywają utrzymywane za długo. Wprowadź krótką retrospektywę decyzji.',
+            ok: 'Dobra równowaga. Poprawia błędy i nie podważa własnej decyzyjności.',
+            high: 'Zbyt częste zmiany decyzji rozmywają kierunek. Zespół przestaje wierzyć w trwałość ustaleń.',
           },
         },
       ],
