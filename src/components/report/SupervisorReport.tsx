@@ -59,7 +59,7 @@ export default function SupervisorReport({ fitness, persona, model, onBack }: Pr
         {/* COVER */}
         <Section>
           <div className="font-mono text-[11px] tracking-[0.15em] uppercase mb-2" style={{ color: BRAND.secondary }}>Przewodnik dla przełożonego</div>
-          <h1 className="text-3xl font-black tracking-tight mb-2" style={{ color: NAVY }}>Rozmowa rozwojowa z {persona.name.split(' ')[0]}</h1>
+          <h1 className="text-3xl font-black tracking-tight mb-2" style={{ color: NAVY }}>Rozmowa rozwojowa — {persona.name}</h1>
           <p className="text-gray-500 mb-5">{persona.position} · raport 360 z {fitness.totalRespondents} perspektyw</p>
           {SUPERVISOR_INTRO.map((p, i) => <p key={i} className="text-[15px] leading-relaxed text-gray-700 mb-3">{p}</p>)}
         </Section>
