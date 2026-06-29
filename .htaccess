@@ -1,0 +1,8 @@
+# CORS dla obrazów — pozwala html2canvas (eksport PDF) wczytać je bez zatruwania canvas.
+# Bez tego nagłówka serwer nie zwraca Access-Control-Allow-Origin i toDataURL pada
+# z SecurityError (tainted canvas). Dotyczy /360-demo/ i podkatalogów (suus/, assets/).
+<IfModule mod_headers.c>
+  <FilesMatch "\.(jpg|jpeg|png|gif|webp|svg)$">
+    Header set Access-Control-Allow-Origin "*"
+  </FilesMatch>
+</IfModule>
